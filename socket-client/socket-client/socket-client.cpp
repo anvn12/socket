@@ -79,7 +79,7 @@ int main() {
 	std::cout << "Connected to " << serverIP << endl;
 
 
-
+	system("pause");
 
 	
 
