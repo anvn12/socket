@@ -13,4 +13,10 @@ Nó sổ ra một đống thứ, làm lại mấy đấy
 1. Giao diện ftp
 1. chức năng cơ bản (trừ put, mput)
 1. mput, put -> thêm 1 dòng system (clamscan,,,,,)
-1. 
+
+
+#
+
+26/06
+https://learn.microsoft.com/en-us/windows/win32/winsock/
+https://stackoverflow.com/questions/63542867/how-to-connect-to-a-local-host-using-winsock2
