@@ -20,7 +20,7 @@ private:
 	string username;
 	string password;
 
-	const char* port = "21";
+	const char* port = "21";	// tcp
 
 
 	bool connectToServer(addrinfo* result);

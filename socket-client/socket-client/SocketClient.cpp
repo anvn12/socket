@@ -52,8 +52,8 @@ bool SocketClient::connectToServer(addrinfo* result) {
 // invalid command => return false
 bool SocketClient::processCommand()
 {
-	// open <IP>
-	if (command[0] == "open")
+	//connect to the FTP server
+	if (command[0] == "open") // open <IP>
 	{
 		if (isConnected == true)
 		{
@@ -125,9 +125,10 @@ bool SocketClient::processCommand()
 
 		return true;
 	}
-	else if (command[0] == "close")		// close
+	//disconnect to the FTP server
+	else if (command[0] == "close")		//close
 	{
-		if (isConnected == false)
+		if (isConnected == false)	// not connected
 		{
 			cout << "Not connected.\n";
 			return true;
@@ -155,6 +156,7 @@ bool SocketClient::processCommand()
 		
 		return true;
 	}
+	//exit the FTP client
 	else if (command[0] == "quit" || command[0] == "bye")	// quit or bye
 	{
 		if (command.size() != 1)
@@ -187,6 +189,91 @@ bool SocketClient::processCommand()
 
 		return true;
 	}
+	//Show the current directory on the server
+	else if (command[0] == "pwd")	//pwd
+	{
+		// if not connect
+		if (isConnected == false)
+		{
+			cout << "Not connected.\n";
+			return true;
+		}
+
+		if (command.size() != 1)
+		{
+			return false;
+		}
+
+
+		sendCommandMessage("XPWD\r\n");
+		getResponseMessage();
+
+		return true;
+	}
+	//change directory
+	else if (command[0] == "cd") 
+	{
+		// if not connect
+		if (isConnected == false)
+		{
+			cout << "Not connected.\n";
+			return true;
+		}
+
+		if (command.size() != 2)
+		{
+			return false;
+		}
+
+		string folderName = command[1];
+
+		string msg = "CWD " + folderName + "\r\n";
+
+		sendCommandMessage(msg.c_str());
+		getResponseMessage();
+
+		return true;
+	}
+	//Create folder
+	else if (command[0] == "mkdir") 
+	{
+		// if not connect
+		if (isConnected == false)
+		{
+			cout << "Not connected.\n";
+			return true;
+		}
+
+		if (command.size() != 2)
+		{
+			return false;
+		}
+
+		string folderName = command[1];
+
+		string msg = "XMKD " + folderName + "\r\n";
+
+		sendCommandMessage(msg.c_str());
+		getResponseMessage();
+
+		return true;
+	}
+	
+	//else if (command[0] == "ls") {}
+	//else if (command[0] == "rmdir") {}
+	//else if (command[0] == "delete") {}
+	//else if (command[0] == "rename") {}
+	//else if (command[0] == "get" || command[0] == "recv") {}
+	//else if (command[0] == "put") {}
+	//else if (command[0] == "mput") {}
+	//else if (command[0] == "mget") {}
+	//else if (command[0] == "prompt") {}
+	//else if (command[0] == "ascii / binary") {}
+	//else if (command[0] == "status") {}
+	//else if (command[0] == "passive") {}
+	//else if (command[0] == "help" || command[0] == "?") {}
+
+	
 	else
 	{
 		return false;
