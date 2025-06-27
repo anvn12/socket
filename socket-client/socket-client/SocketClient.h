@@ -39,7 +39,7 @@ public:
 	void inputCommand();
 	bool processCommand();	// false: invalid command
 	void getResponseMessage();
-	void sendMessage(const char*);
+	void sendCommandMessage(const char*);
 };
 
 

@@ -105,7 +105,7 @@ bool SocketClient::processCommand()
 		getResponseMessage();
 
 		// input username and password
-		sendMessage("OPTS UTF8 ON\r\n");
+		sendCommandMessage("OPTS UTF8 ON\r\n");
 		getResponseMessage();
 
 		cout << "Username: ";
@@ -113,14 +113,14 @@ bool SocketClient::processCommand()
 
 		string tempMsg = "USER " + username + "\r\n";
 
-		sendMessage(tempMsg.c_str());
+		sendCommandMessage(tempMsg.c_str());
 		getResponseMessage();
 
 		cout << "Password: ";
 		getline(cin, password);
 		tempMsg = "PASS " + password + "\r\n";
 
-		sendMessage(tempMsg.c_str());
+		sendCommandMessage(tempMsg.c_str());
 		getResponseMessage();
 
 		return true;
@@ -139,7 +139,7 @@ bool SocketClient::processCommand()
 			return false;
 		}
 
-		sendMessage("QUIT\r\n");
+		sendCommandMessage("QUIT\r\n");
 		getResponseMessage();
 
 		// shutdown the send half of the connection since no more data will be sent
@@ -170,7 +170,7 @@ bool SocketClient::processCommand()
 		}
 
 
-		sendMessage("QUIT\r\n");
+		sendCommandMessage("QUIT\r\n");
 		getResponseMessage();
 
 		// shutdown the send half of the connection since no more data will be sent
@@ -207,7 +207,7 @@ void SocketClient::getResponseMessage()
 	cout << responseMessage;
 }
 
-void SocketClient::sendMessage(const char* msg)
+void SocketClient::sendCommandMessage(const char* msg)
 {
 	int iResult = send(socket_, msg, (int)strlen(msg), 0);
 	if (iResult == SOCKET_ERROR) {
