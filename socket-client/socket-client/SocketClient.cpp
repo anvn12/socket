@@ -264,8 +264,6 @@ bool SocketClient::processCommand()
 	//else if (command[0] == "delete") {}
 	//else if (command[0] == "rename") {}
 	//else if (command[0] == "get" || command[0] == "recv") {}
-	//else if (command[0] == "put") {}
-	//else if (command[0] == "mput") {}
 	//else if (command[0] == "mget") {}
 	//else if (command[0] == "prompt") {}
 	//else if (command[0] == "ascii / binary") {}
@@ -273,6 +271,12 @@ bool SocketClient::processCommand()
 	//else if (command[0] == "passive") {}
 	//else if (command[0] == "help" || command[0] == "?") {}
 
+	
+
+	// clamscan agent.....................
+
+	//else if (command[0] == "put") {}
+	//else if (command[0] == "mput") {}
 	
 	else
 	{
