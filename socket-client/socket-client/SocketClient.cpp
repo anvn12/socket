@@ -1,10 +1,19 @@
 #include "SocketClient.h"
+#include "General.h"
 
 void SocketClient::close() {
 	if (socket_ != INVALID_SOCKET) {
 		closesocket(socket_);
 		socket_ = INVALID_SOCKET;
 	}
+}
+
+void SocketClient::inputCommand() {
+	string temp;
+	getline(cin, temp);
+
+	// process string (erase redundant space, split words)
+	command = processCommandString(temp);
 }
 
 
@@ -39,3 +48,164 @@ bool SocketClient::connectToServer(addrinfo* result) {
 
 	return true;
 }
+
+// invalid command => return false
+bool SocketClient::processCommand()
+{
+	// open <IP>
+	if (command[0] == "open")
+	{
+		if (isConnected == true)
+		{
+			cout << "Already connected to " << serverIP << ", disconnect first.\n";
+			return true;
+		}
+
+		if (command.size() != 2)
+		{
+			//cout << "Invalid command.\n";
+			return false;
+		}
+
+		serverIP = command[1];
+		if (isValidIP(serverIP) == false)
+		{
+			return true;
+		}
+
+
+		//hints: give the supported type (IPV4 TCP)
+		addrinfo* result = NULL, hints;
+		memset(&hints, 0, sizeof(hints));	//clear all data of hints
+		//IPV4 and TCP
+		hints.ai_family = AF_INET;			//ipv4
+		hints.ai_socktype = SOCK_STREAM;	//tcp protocol
+		hints.ai_protocol = IPPROTO_TCP;	//tcp protocol
+
+		// get the server address and port, put to result
+		int iResult = getaddrinfo(serverIP.c_str(), port, &hints, &result);
+		if (iResult != 0) { //fail to get address
+			std::cerr << "getaddrinfo failed: " << iResult << std::endl;
+			isQuit = true;
+			return true;
+		}
+
+		// attemp to connect
+		if (connectToServer(result) == false) {
+			freeaddrinfo(result);
+			isQuit = true;
+			return true;
+		}
+
+		// connected
+		isConnected = true;
+		std::cout << "Connected to " << serverIP << endl;
+		freeaddrinfo(result);
+
+		getResponseMessage();
+
+		// input username and password
+		sendMessage("OPTS UTF8 ON\r\n");
+		getResponseMessage();
+
+		cout << "Username: ";
+		getline(cin, username);
+
+		string tempMsg = "USER " + username + "\r\n";
+
+		sendMessage(tempMsg.c_str());
+		getResponseMessage();
+
+		cout << "Password: ";
+		getline(cin, password);
+		tempMsg = "PASS " + password + "\r\n";
+
+		sendMessage(tempMsg.c_str());
+		getResponseMessage();
+
+		return true;
+	}
+	else if (command[0] == "close")
+	{
+		if (isConnected == false)
+		{
+			cout << "Not connected.\n";
+			return true;
+		}
+
+		if (command.size() != 1)
+		{
+			//cout << "Invalid command.\n";
+			return false;
+		}
+
+		sendMessage("QUIT\r\n");
+		getResponseMessage();
+
+		// shutdown the send half of the connection since no more data will be sent
+		int iResult = shutdown(socket_, SD_SEND);
+		if (iResult == SOCKET_ERROR) {
+			printf("shutdown failed: %d\n", WSAGetLastError());
+			isQuit = true;
+			return true;
+		}
+
+		isConnected = false;
+		close();
+		
+		return true;
+	}
+	else if (command[0] == "quit" || command[0] == "bye")
+	{
+		if (command.size() != 1)
+		{
+			//cout << "Invalid command.\n";
+			return false;
+		}
+
+		sendMessage("QUIT\r\n");
+		getResponseMessage();
+
+		// shutdown the send half of the connection since no more data will be sent
+		int iResult = shutdown(socket_, SD_SEND);
+		if (iResult == SOCKET_ERROR) {
+			printf("shutdown failed: %d\n", WSAGetLastError());
+			isQuit = true;
+			return false;
+		}
+
+		isConnected = false;
+		isQuit = true;
+		close();
+
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+void SocketClient::getResponseMessage()
+{
+	// get response message
+	char responseMessage[4097];		// leave 1 char for '\0'
+
+	int iResult = recv(socket_, responseMessage, sizeof(responseMessage) - 1, 0);
+	
+	if (iResult > 0) {
+		responseMessage[iResult] = '\0';
+	}
+
+	cout << responseMessage;
+}
+
+void SocketClient::sendMessage(const char* msg)
+{
+	int iResult = send(socket_, msg, (int)strlen(msg), 0);
+	if (iResult == SOCKET_ERROR) {
+		printf("send failed: %d\n", WSAGetLastError());
+		isQuit = true;
+	}
+}
+

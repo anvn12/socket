@@ -1,5 +1,3 @@
-#ifndef WinsockManager_h
-#define WinsockManager_h
 #pragma once
 
 #include <winsock2.h>
@@ -15,11 +13,13 @@ private:
 public:
 	WinsockManager() {}
 	~WinsockManager() {}
+
+	// no copy
+	WinsockManager(const WinsockManager&) = delete;
+	WinsockManager& operator=(const WinsockManager&) = delete;
+
 	// Initialize Winsock
 	bool init(); // false: cannot init
 	// shutdown winsock
 	void cleanup();
 };
-
-
-#endif
