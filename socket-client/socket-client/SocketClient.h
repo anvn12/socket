@@ -31,8 +31,8 @@ public:
 	void close();
 
 	SOCKET& getSocket() { return socket_; }
-	bool getIsConnected() { return isConnected; }
-	bool getIsQuit() { return isQuit; }
+	bool getIsConnected() const { return isConnected; }
+	bool getIsQuit() const { return isQuit; }
 	
 
 
