@@ -127,10 +127,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="socket-client.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="SocketClient.cpp" />
+    <ClCompile Include="WinsockManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header.h" />
+    <ClInclude Include="SocketClient.h" />
+    <ClInclude Include="WinsockManager.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="note.md" />
