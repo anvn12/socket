@@ -125,7 +125,7 @@ bool SocketClient::processCommand()
 
 		return true;
 	}
-	else if (command[0] == "close")
+	else if (command[0] == "close")		// close
 	{
 		if (isConnected == false)
 		{
@@ -155,13 +155,20 @@ bool SocketClient::processCommand()
 		
 		return true;
 	}
-	else if (command[0] == "quit" || command[0] == "bye")
+	else if (command[0] == "quit" || command[0] == "bye")	// quit or bye
 	{
 		if (command.size() != 1)
 		{
-			//cout << "Invalid command.\n";
 			return false;
 		}
+
+		// if not connect
+		if (isConnected == false)
+		{
+			isQuit = true;
+			return true;
+		}
+
 
 		sendMessage("QUIT\r\n");
 		getResponseMessage();
