@@ -259,7 +259,24 @@ bool SocketClient::processCommand()
 		return true;
 	}
 	
-	//else if (command[0] == "ls") {}
+	else if (command[0] == "ls") {
+		sendCommandMessage("PASV\r\n");
+		string response = getResponseMessage();
+
+		// if not connect
+		if (isConnected == false)
+		{
+			cout << "Not connected.\n";
+			return true;
+		}
+		if (command.size() != 1)
+		{
+			return false;
+		}
+		sendCommandMessage("LIST\r\n");
+		getResponseMessage();
+		return true;
+	}
 	//else if (command[0] == "rmdir") {}
 	//else if (command[0] == "delete") {}
 	//else if (command[0] == "rename") {}
@@ -284,18 +301,18 @@ bool SocketClient::processCommand()
 	}
 }
 
-void SocketClient::getResponseMessage()
+string SocketClient::getResponseMessage()
 {
-	// get response message
-	char responseMessage[4097];		// leave 1 char for '\0'
-
+	char responseMessage[4097];
 	int iResult = recv(socket_, responseMessage, sizeof(responseMessage) - 1, 0);
-	
+
 	if (iResult > 0) {
 		responseMessage[iResult] = '\0';
+		cout << responseMessage;
+		return string(responseMessage); //tra ve gia tri de xu ly may cai khac
 	}
 
-	cout << responseMessage;
+	return "";
 }
 
 void SocketClient::sendCommandMessage(const char* msg)

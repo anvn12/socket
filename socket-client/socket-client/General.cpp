@@ -63,3 +63,26 @@ bool isNum(string temp)
 
 	return true;
 }
+
+pair<string, int> parsePASVResponse(const string& response) {
+	//dung regex de khoi pai parse () hay ,
+	//227 Entering Passive Mode (h1,h2,h3,h4,p1,p2)
+	regex pasvRegex(R"(\((\d+),(\d+),(\d+),(\d+),(\d+),(\d+)\))");
+	smatch match;
+
+	if (regex_search(response, match, pasvRegex) && match.size() == 7) {
+		int h1 = stoi(match[1]);
+		int h2 = stoi(match[2]);
+		int h3 = stoi(match[3]);
+		int h4 = stoi(match[4]);
+		int p1 = stoi(match[5]);
+		int p2 = stoi(match[6]);
+
+		string ip = to_string(h1) + "." + to_string(h2) + "." + to_string(h3) + "." + to_string(h4) + ".";
+		int port = p1 * 256 + p2;
+		return { ip, port };
+	}
+	else {
+		throw runtime_error("Failed to parse PASV: " + response);
+	}
+}
