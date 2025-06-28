@@ -200,7 +200,7 @@ bool SocketClient::processCommand()
 		return true;
 	}
 	//Show the current directory on the server
-	else if (command[0] == "pwd")	//pwd
+	else if (command[0] == "pwd")	
 	{
 		// if not connect
 		if (isConnected == false)
@@ -230,12 +230,38 @@ bool SocketClient::processCommand()
 			return true;
 		}
 
-		if (command.size() != 2)
-		{
-			return false;
+		string folderName;
+		if (command.size() == 1) { //enter cd, then enter the folder, 
+			cout << "Remote directory ";
+			getline(cin, folderName);
+
+			if (folderName.empty()) {
+				cout << "No dicrectory was entered.\n";
+				return true;
+			}
+			//xu ly cd, "vk iu dau", co dau "" noi chung
+			if (folderName.front() == '"' && folderName.back() == '"' && folderName.length() > 1) {
+				folderName = folderName.substr(1, folderName.length() - 2);
+			}
+		}
+		else { //enter cd foldername
+			if (command[1].front() == '"') { //check xem co phai dang " " hay 0, phai thi tach ra
+				folderName = command[1].substr(1); //xoa cai " o dau 
+				for (size_t i = 2; i < command.size(); i++) {
+					folderName += " " + command[i];
+				}
+				if (!folderName.empty() && folderName.back() == '"') {
+					folderName.pop_back();
+				}
+			}
+			else if (command.size() == 2) {
+				folderName = command[1];
+			}
+			else {
+				return false; //command size khac 1 va 2 
+			}
 		}
 
-		string folderName = command[1];
 
 		string msg = "CWD " + folderName + "\r\n";
 
@@ -321,15 +347,13 @@ bool SocketClient::processCommand()
 
 		string portCommand = formatPORTCommand(localIP, localPort);
 		sendCommandMessage(portCommand.c_str());
-		string response = getResponseMessage();
-		cout << response;
+		cout << getResponseMessage();
 
 		//gui cai lenh NLST
 		sendCommandMessage("NLST\r\n");
 
 		//in cai 150 ra truoc
-		string transferStartMsg = getResponseMessage();
-		cout << transferStartMsg;
+		cout << getResponseMessage();
 		//accept incoming data connection
 		SOCKET dataSocket = accept(listenSocket, nullptr, nullptr);
 		closesocket(listenSocket);
@@ -369,8 +393,7 @@ bool SocketClient::processCommand()
 			cout << directoryListing << "\n";
 		}
 		//cout << "ftp: " << totalBytes << " bytes received in " << seconds << " seconds " << speed << " Kbytes/sec.\n";
-		string finalMessage = getResponseMessage();
-		cout << finalMessage;
+		cout << getResponseMessage();
 
 		return true;
 	}
