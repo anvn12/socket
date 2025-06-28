@@ -6,6 +6,7 @@
 #include <sstream>
 #include <utility>
 #include <regex>
+#include <tuple>
 
 using namespace std;
 
@@ -15,4 +16,4 @@ bool isValidIP(string ip);
 
 bool isNum(string temp);
 
-pair<string, int> parsePASVResponse(const string& response);
+pair<string, string> parsePASVResponse(const string& response);

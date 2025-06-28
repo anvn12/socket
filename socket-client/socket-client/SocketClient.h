@@ -23,7 +23,9 @@ private:
 	const char* port = "21";	// tcp
 
 
-	bool connectToServer(addrinfo* result);
+	//bool connectToServer(addrinfo* result);
+	SOCKET createConnection(const string& ip, const string& port, bool withRetry = false);
+	SOCKET createDataConnection(const string& dataIP, const string& dataPort);
 public:
 	SocketClient() {}
 	~SocketClient() {}
