@@ -294,6 +294,11 @@ bool SocketClient::processCommand()
 		//1. gui PASV de vao passive mode
 		sendCommandMessage("PASV\r\n");
 		string response = getResponseMessage();
+		cout << response;
+		if (response.substr(0, 3) != "227") {
+			cerr << "PASV command failed: " << response;
+			return true;
+		}
 		string dataIP, dataPort;
 
 		try {
@@ -309,8 +314,8 @@ bool SocketClient::processCommand()
 			cerr << "Failed to create data connection \n";
 			return true;
 		}
-		//gui cai lenh lsit
-		sendCommandMessage("LIST\r\n");
+		//gui cai lenh NLST
+		sendCommandMessage("NLST\r\n");
 
 		//bat dau doc directory tu data socket
 		char buffer[4096];
@@ -323,12 +328,14 @@ bool SocketClient::processCommand()
 
 		//dong cai data socket
 		closesocket(dataSocket);
-		cout << getResponseMessage();
-
 		//list cai directory ra
 		if (!directoryListing.empty()) {
 			cout << directoryListing << "\n";
 		}
+
+		string finalMessage = getResponseMessage();
+		cout << finalMessage;
+
 		return true;
 	}
 	//else if (command[0] == "rmdir") {}
