@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <chrono>
 
 #pragma comment(lib, "Ws2_32.lib")
 using namespace std;
@@ -26,6 +27,10 @@ private:
 	//bool connectToServer(addrinfo* result);
 	SOCKET createConnection(const string& ip, const string& port, bool withRetry = false);
 	SOCKET createDataConnection(const string& dataIP, const string& dataPort);
+
+	//for port mode
+	SOCKET createListeningSocket(string& localIP, int& localPort);
+	string formatPORTCommand(const string& ip, int port);
 public:
 	SocketClient() {}
 	~SocketClient() {}

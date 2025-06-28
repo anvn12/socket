@@ -291,40 +291,76 @@ bool SocketClient::processCommand()
 			return false;
 		}
 
-		//1. gui PASV de vao passive mode
-		sendCommandMessage("PASV\r\n");
+		////1. gui PASV de vao passive mode
+		//sendCommandMessage("PASV\r\n");
+		//string response = getResponseMessage();
+		//cout << response;
+		//string dataIP, dataPort;
+
+		//try {
+		//	tie(dataIP, dataPort) = parsePASVResponse(response);
+		//}
+		//catch (const exception& ex) {
+		//	cerr << ex.what() << "\n";
+		//	return false;
+		//}
+
+		//SOCKET dataSocket = createDataConnection(dataIP, dataPort);
+		//if (dataSocket == INVALID_SOCKET) {
+		//	cerr << "Failed to create data connection \n";
+		//	return true;
+		//}
+
+		string localIP;
+		int localPort;
+		SOCKET listenSocket = createListeningSocket(localIP, localPort);
+		if (listenSocket == INVALID_SOCKET) {
+			cerr << "Failed to create listening socket for PORT mode";
+			return true;
+		}
+
+		string portCommand = formatPORTCommand(localIP, localPort);
+		sendCommandMessage(portCommand.c_str());
 		string response = getResponseMessage();
 		cout << response;
-		if (response.substr(0, 3) != "227") {
-			cerr << "PASV command failed: " << response;
-			return true;
-		}
-		string dataIP, dataPort;
 
-		try {
-			tie(dataIP, dataPort) = parsePASVResponse(response);
-		}
-		catch (const exception& ex) {
-			cerr << ex.what() << "\n";
-			return false;
-		}
-
-		SOCKET dataSocket = createDataConnection(dataIP, dataPort);
-		if (dataSocket == INVALID_SOCKET) {
-			cerr << "Failed to create data connection \n";
-			return true;
-		}
 		//gui cai lenh NLST
 		sendCommandMessage("NLST\r\n");
 
+		//in cai 150 ra truoc
+		string transferStartMsg = getResponseMessage();
+		cout << transferStartMsg;
+		//accept incoming data connection
+		SOCKET dataSocket = accept(listenSocket, nullptr, nullptr);
+		closesocket(listenSocket);
+
+		if (dataSocket == INVALID_SOCKET) {
+			cerr << "Failed to accept data connection";
+			return true;
+		}
+		
+		//doan nay tro xuong k khac gi pasv mode
 		//bat dau doc directory tu data socket
 		char buffer[4096];
 		string directoryListing;
 		int bytesReceived;
+
+		//int totalBytes = 0;
+		//auto start = chrono::high_resolution_clock::now(); 
+
 		while ((bytesReceived = recv(dataSocket, buffer, sizeof(buffer) - 1, 0)) > 0) {
 			buffer[bytesReceived] = '\0';
 			directoryListing += buffer;
+			//totalBytes += bytesReceived;
 		}
+
+		//auto end = chrono::high_resolution_clock::now();  
+
+		//chrono::duration<double> duration = end - start;  //seconds
+
+		//double seconds = duration.count();
+		//double kilobytes = totalBytes / 1024.0;
+		//double speed = (seconds > 0) ? (kilobytes / seconds) : 0;
 
 		//dong cai data socket
 		closesocket(dataSocket);
@@ -332,7 +368,7 @@ bool SocketClient::processCommand()
 		if (!directoryListing.empty()) {
 			cout << directoryListing << "\n";
 		}
-
+		//cout << "ftp: " << totalBytes << " bytes received in " << seconds << " seconds " << speed << " Kbytes/sec.\n";
 		string finalMessage = getResponseMessage();
 		cout << finalMessage;
 
@@ -400,6 +436,7 @@ SOCKET SocketClient::createConnection(const string& ip, const string& port, bool
 	int iResult = getaddrinfo(ip.c_str(), port.c_str(), &hints, &result);
 	if (iResult != 0) {
 		cerr << "getaddrinfo failed: " << iResult << endl;
+		//closesocket(newSocket); k can close do newSocket = invalid
 		return INVALID_SOCKET;
 	}
 
@@ -437,4 +474,89 @@ SOCKET SocketClient::createConnection(const string& ip, const string& port, bool
 //wrap function, tai t thay m dung nhu kieu kia, con t dung kieu khac =))) 
 SOCKET SocketClient::createDataConnection(const string& dataIP, const string& dataPort) {
 	return createConnection(dataIP, dataPort, false);  //do la data connection nen k dung retry
+}
+
+SOCKET SocketClient::createListeningSocket(string& localIP, int& localPort) {
+	SOCKET listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (listenSocket == INVALID_SOCKET) {
+		cerr << "FAiled to create listening socket: " << WSAGetLastError() << "\n";
+		return INVALID_SOCKET;
+	}
+
+	//get ip
+	char hostName[256];
+	if (gethostname(hostName, sizeof(hostName)) == SOCKET_ERROR) {
+		cerr << "Failed to get hostname: " << WSAGetLastError() << "\n";
+		closesocket(listenSocket);
+		return INVALID_SOCKET;
+	}
+
+	addrinfo hints, *result = nullptr;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+
+	int iResult = getaddrinfo(hostName, nullptr, &hints, &result);
+	if (iResult != 0) {
+		cerr << "getaddrinfo failed: " << iResult << endl;
+		closesocket(listenSocket);
+		return INVALID_SOCKET;
+	}
+
+	sockaddr_in* sockaddr_ipv4 = (sockaddr_in*)result->ai_addr;
+	char ipStr[INET_ADDRSTRLEN];
+	if (inet_ntop(AF_INET, &(sockaddr_ipv4->sin_addr), ipStr, INET_ADDRSTRLEN) == nullptr) {
+		cerr << "inet_ntop failed" << endl;
+		freeaddrinfo(result);
+		closesocket(listenSocket);
+		return INVALID_SOCKET;
+	}
+
+	localIP = string(ipStr);
+	freeaddrinfo(result);
+
+	//bind toi port bat ki
+	sockaddr_in addr;
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = INADDR_ANY;
+	addr.sin_port = 0; // = 0 la cho system chon
+
+	if (bind(listenSocket, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR) {
+		cerr << "Bind failed: " << WSAGetLastError() << endl;
+		closesocket(listenSocket);
+		return INVALID_SOCKET;
+	}
+
+	//lay cai port do
+	int addrLen = sizeof(addr);
+	if (getsockname(listenSocket, (sockaddr*)&addr, &addrLen) == SOCKET_ERROR) {
+		cerr << "getsockname failed: " << WSAGetLastError() << endl;
+		closesocket(listenSocket);
+		return INVALID_SOCKET;
+	}
+	localPort = ntohs(addr.sin_port);
+
+	//listen
+	if (listen(listenSocket, 1) == SOCKET_ERROR) {
+		cerr << "Listen failed: " << WSAGetLastError() << endl;
+		closesocket(listenSocket);
+		return INVALID_SOCKET;
+	}
+
+	return listenSocket;
+}
+
+//PORT h1,h2,h3,h4,p1,p2
+string SocketClient::formatPORTCommand(const string& ip, int port) {
+	string formatIP = ip;
+	for (char& c : formatIP) {
+		if (c == '.')
+			c = ',';
+	}
+
+	//tinh so byte cua port
+	int highByte = port / 256;
+	int lowByte= port % 256;
+
+	return "PORT " + formatIP + "," + to_string(highByte) + "," + to_string(lowByte) + "\r\n";
 }
