@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <utility>
+#include <regex>
 
 using namespace std;
 
@@ -13,3 +15,4 @@ bool isValidIP(string ip);
 
 bool isNum(string temp);
 
+pair<string, int> parsePASVResponse(const string& response);
