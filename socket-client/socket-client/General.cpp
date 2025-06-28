@@ -64,7 +64,7 @@ bool isNum(string temp)
 	return true;
 }
 
-pair<string, int> parsePASVResponse(const string& response) {
+pair<string, string> parsePASVResponse(const string& response) {
 	//dung regex de khoi pai parse () hay ,
 	//227 Entering Passive Mode (h1,h2,h3,h4,p1,p2)
 	regex pasvRegex(R"(\((\d+),(\d+),(\d+),(\d+),(\d+),(\d+)\))");
@@ -79,7 +79,8 @@ pair<string, int> parsePASVResponse(const string& response) {
 		int p2 = stoi(match[6]);
 
 		string ip = to_string(h1) + "." + to_string(h2) + "." + to_string(h3) + "." + to_string(h4) + ".";
-		int port = p1 * 256 + p2;
+		int intPort = p1 * 256 + p2;
+		string port = to_string(intPort);
 		return { ip, port };
 	}
 	else {
