@@ -1,4 +1,4 @@
-#include "SocketClient.h"
+﻿#include "SocketClient.h"
 #include "General.h"
 
 void SocketClient::close() {
@@ -223,101 +223,100 @@ bool SocketClient::processCommand()
 	//change directory
 	else if (command[0] == "cd") 
 	{
-		// if not connect
-		if (isConnected == false)
-		{
-			cout << "Not connected.\n";
+		if (!isConnected) { 
+			cout << "Not connected.\n"; 
+			return true; 
+		}
+		string folder = getArgOrPrompt(command, 1, "Remote directory: ");
+		if (folder.empty()) {
+			cout << "No directory was entered.\n";
 			return true;
 		}
-
-		string folderName;
-		if (command.size() == 1) { //enter cd, then enter the folder, 
-			cout << "Remote directory ";
-			getline(cin, folderName);
-
-			if (folderName.empty()) {
-				cout << "No dicrectory was entered.\n";
-				return true;
-			}
-			//xu ly cd, "vk iu dau", co dau "" noi chung
-			if (folderName.front() == '"' && folderName.back() == '"' && folderName.length() > 1) {
-				folderName = folderName.substr(1, folderName.length() - 2);
-			}
-		}
-		else { //enter cd foldername
-			if (command[1].front() == '"') { //check xem co phai dang " " hay 0, phai thi tach ra
-				folderName = command[1].substr(1); //xoa cai " o dau 
-				for (size_t i = 2; i < command.size(); i++) {
-					folderName += " " + command[i];
-				}
-				if (!folderName.empty() && folderName.back() == '"') {
-					folderName.pop_back();
-				}
-			}
-			else if (command.size() == 2) {
-				folderName = command[1];
-			}
-			else {
-				return false; //command size khac 1 va 2 
-			}
-		}
-
-
-		string msg = "CWD " + folderName + "\r\n";
-
-		sendCommandMessage(msg.c_str());
+		sendCommandMessage(("CWD " + folder + "\r\n").c_str());
 		cout << getResponseMessage();
-
 		return true;
 	}
 	//Create folder
 	else if (command[0] == "mkdir") 
 	{
-		// if not connect
-		if (isConnected == false)
-		{
+		if (!isConnected) { 
+			cout << "Not connected.\n"; 
+			return true; 
+		}
+		string folder = getArgOrPrompt(command, 1, "Folder name: ");
+		if (folder.empty()) {
+			cout << "No folder name was entered.\n";
+			return true;
+		}
+		sendCommandMessage(("XMKD " + folder + "\r\n").c_str());
+		cout << getResponseMessage();
+		return true;
+	}
+	//remove folder
+	else if (command[0] == "rmdir") {
+		if (!isConnected) { 
+			cout << "Not connected.\n"; 
+			return true; 
+		}
+		string folder = getArgOrPrompt(command, 1, "Folder name: ");
+		if (folder.empty()) {
+			cout << "No folder name was entered.\n";
+			return true;
+		}
+		sendCommandMessage(("XRMD " + folder + "\r\n").c_str());
+		cout << getResponseMessage();
+		return true;
+	}
+	//delete a file
+	else if (command[0] == "delete") {
+		if (!isConnected) { 
+			cout << "Not connected.\n"; 
+			return true; 
+		}
+		string file = getArgOrPrompt(command, 1, "Enter file name: ");
+		if (file.empty()) {
+			cout << "No file name was entered.\n";
+			return true;
+		}
+		sendCommandMessage(("DELE " + file + "\r\n").c_str());
+		cout << getResponseMessage();
+		return true;
+	}
+	//rename kiểu interactive, là nhập rename xong nhập từng cái name
+	//chứ dùng kiểu rename filename newname thì không được, t làm 1 lồn lỗi
+	else if (command[0] == "rename") {
+		if (!isConnected) {
 			cout << "Not connected.\n";
 			return true;
 		}
-		string folderName;
-		if (command.size() == 1) { //enter cd, then enter the folder, 
-			cout << "Remote directory ";
-			getline(cin, folderName);
 
-			if (folderName.empty()) {
-				cout << "No dicrectory was entered.\n";
-				return true;
-			}
-			//xu ly cd, "vk iu dau", co dau "" noi chung
-			if (folderName.front() == '"' && folderName.back() == '"' && folderName.length() > 1) {
-				folderName = folderName.substr(1, folderName.length() - 2);
-			}
+		if (command.size() != 1) {
+			return false;
 		}
-		else { //enter cd foldername
-			if (command[1].front() == '"') { //check xem co phai dang " " hay 0, phai thi tach ra
-				folderName = command[1].substr(1); //xoa cai " o dau 
-				for (size_t i = 2; i < command.size(); i++) {
-					folderName += " " + command[i];
-				}
-				if (!folderName.empty() && folderName.back() == '"') {
-					folderName.pop_back();
-				}
-			}
-			else if (command.size() == 2) {
-				folderName = command[1];
-			}
-			else {
-				return false; //command size khac 1 va 2 
-			}
-		}
-		string msg = "XMKD " + folderName + "\r\n";
 
-		sendCommandMessage(msg.c_str());
-		cout << getResponseMessage();
+		string originalName, newName;
+		cout << "From name: ";
+		getline(cin, originalName);
+		if (originalName.empty()) {
+			cout << "No source name was entered.\n";
+			return true;
+		}
+
+		cout << "To name: ";
+		getline(cin, newName);
+		if (newName.empty()) {
+			cout << "No new name was entered.\n";
+			return true;
+		}
+
+
+		sendCommandMessage(("RNFR " + originalName + "\r\n").c_str());
+		cout << getResponseMessage(); 
+		sendCommandMessage(("RNTO " + newName + "\r\n").c_str());
+		cout << getResponseMessage();  
 
 		return true;
 	}
-	
 	//co 2 loai conenction la control conenction voi data conenction
 	//port 21 la de control connection
 	//data connection la cho cac lenh lien quan den thay doi data,.. nhu LIST, RETR, STOR nen can 1 cai port khac, can phai lay cai port voi ip khac 
@@ -420,9 +419,7 @@ bool SocketClient::processCommand()
 
 		return true;
 	}
-	//else if (command[0] == "rmdir") {}
-	//else if (command[0] == "delete") {}
-	//else if (command[0] == "rename") {}
+
 	//else if (command[0] == "get" || command[0] == "recv") {}
 	//else if (command[0] == "mget") {}
 	//else if (command[0] == "prompt") {}
@@ -606,3 +603,4 @@ string SocketClient::formatPORTCommand(const string& ip, int port) {
 
 	return "PORT " + formatIP + "," + to_string(highByte) + "," + to_string(lowByte) + "\r\n";
 }
+
