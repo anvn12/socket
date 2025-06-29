@@ -38,6 +38,8 @@ private:
 	//nó chỉ khởi tạo cái listening thôi, xong nó sẽ chờ FTP server kết nối
 	SOCKET createListeningSocket(string& localIP, int& localPort);
 	string formatPORTCommand(const string& ip, int port);
+
+
 public:
 	SocketClient() {}
 	~SocketClient() {}
