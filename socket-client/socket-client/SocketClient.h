@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -25,10 +25,17 @@ private:
 
 
 	//bool connectToServer(addrinfo* result);
-	SOCKET createConnection(const string& ip, const string& port, bool withRetry = false);
+
+	//cai nay la de tao client active connection, co tac dung khoi tao CONTROL connection hoac PASV DATA connection
+	//dung khi ket noi voi FTP server: open <ip>..., tạo data connection cho PASV nhu cai lenh ls cũ
+	//tóm gọn nó là client-side connection dùng khi mình muốn chủ động kết nối với server
+	SOCKET createConnection(const string& ip, const string& port, bool withRetry = false); 
 	SOCKET createDataConnection(const string& dataIP, const string& dataPort);
 
-	//for port mode
+	//for port 
+	//ngược lại với cái trên, cái này dùng khi mình cần chấp nhận 1 kết nối từ FTP Server
+	//client khởi tạo 1 listening socket để chấp nhận DATA connection từ server.
+	//nó chỉ khởi tạo cái listening thôi, xong nó sẽ chờ FTP server kết nối
 	SOCKET createListeningSocket(string& localIP, int& localPort);
 	string formatPORTCommand(const string& ip, int port);
 public:

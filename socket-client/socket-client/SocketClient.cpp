@@ -279,14 +279,37 @@ bool SocketClient::processCommand()
 			cout << "Not connected.\n";
 			return true;
 		}
+		string folderName;
+		if (command.size() == 1) { //enter cd, then enter the folder, 
+			cout << "Remote directory ";
+			getline(cin, folderName);
 
-		if (command.size() != 2)
-		{
-			return false;
+			if (folderName.empty()) {
+				cout << "No dicrectory was entered.\n";
+				return true;
+			}
+			//xu ly cd, "vk iu dau", co dau "" noi chung
+			if (folderName.front() == '"' && folderName.back() == '"' && folderName.length() > 1) {
+				folderName = folderName.substr(1, folderName.length() - 2);
+			}
 		}
-
-		string folderName = command[1];
-
+		else { //enter cd foldername
+			if (command[1].front() == '"') { //check xem co phai dang " " hay 0, phai thi tach ra
+				folderName = command[1].substr(1); //xoa cai " o dau 
+				for (size_t i = 2; i < command.size(); i++) {
+					folderName += " " + command[i];
+				}
+				if (!folderName.empty() && folderName.back() == '"') {
+					folderName.pop_back();
+				}
+			}
+			else if (command.size() == 2) {
+				folderName = command[1];
+			}
+			else {
+				return false; //command size khac 1 va 2 
+			}
+		}
 		string msg = "XMKD " + folderName + "\r\n";
 
 		sendCommandMessage(msg.c_str());
