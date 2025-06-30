@@ -49,31 +49,41 @@ void SocketClient::inputCommand() {
 //	return true;
 //}
 
-// invalid command => return false
 bool SocketClient::processCommand()
 {
-	//connect to the FTP server
+	//	Muốn hiện câu "invalid command" => return false
+	// 
+	//	Mỗi hàm sẽ gửi 1 số command cho ftp server, server sẽ nhận command
+	//làm công việc tương ứng, sau đó phản hồi (response) lại.
+
+
+	//	Connect to the FTP server
 	if (command[0] == "open") // open <IP>
 	{
+		//	Nếu đã kết nối thì không kết nối lại
 		if (isConnected == true)
 		{
 			cout << "Already connected to " << serverIP << ", disconnect first.\n";
 			return true;
 		}
 
+		//	Nếu số lượng argument khác 2 (câu lệnh đúng theo kiểu: "open <IP>")
 		if (command.size() != 2)
 		{
 			//cout << "Invalid command.\n";
 			return false;
 		}
 
+		//	open <IP>: command[1] chỉnh là <IP>
+		//	Kiểm tra IP có hợp lệ không
 		serverIP = command[1];
 		if (isValidIP(serverIP) == false)
 		{
 			return true;
 		}
 
-
+		//========================================================================
+		
 		////hints: give the supported type (IPV4 TCP)
 		//addrinfo* result = NULL, hints;
 		//memset(&hints, 0, sizeof(hints));	//clear all data of hints
@@ -102,6 +112,9 @@ bool SocketClient::processCommand()
 		//std::cout << "Connected to " << serverIP << endl;
 		//freeaddrinfo(result);
 
+		//========================================================================
+
+
 		SOCKET newSocket = createConnection(serverIP, port, true);  // true for retry
 		if (newSocket == INVALID_SOCKET) {
 			isQuit = true;
@@ -109,33 +122,47 @@ bool SocketClient::processCommand()
 		}
 
 		socket_ = newSocket;
+
+		//	Kết nối thành công
 		isConnected = true;
 		cout << "Connected to " << serverIP << endl;
 
+		//	Nhận tin nhắn phản hồi cho việc kết nối thành công
 		cout << getResponseMessage();
 
-		// input username and password
+		//	Định dạng việc gửi command sang UTF8
+		//nhằm đảm bảo các command không bị sai định dạng
 		sendCommandMessage("OPTS UTF8 ON\r\n");
-		cout << getResponseMessage();
+		cout << getResponseMessage();		//tin nhắn phản hồi cho UTF8
 
+
+		//	Yêu cầu nhập username
 		cout << "Username: ";
 		getline(cin, username);
 
+
+		//	Câu command để gửi username cho FTP server
 		string tempMsg = "USER " + username + "\r\n";
 
+		//	Gửi command và nhận phản hồi
 		sendCommandMessage(tempMsg.c_str());
 		cout << getResponseMessage();
 
+		
+		//	Nhập password
 		cout << "Password: ";
 		getline(cin, password);
+
+		//	Câu command để gửi password cho FTP server
 		tempMsg = "PASS " + password + "\r\n";
 
+		//	Gửi command và nhận phản hồi
 		sendCommandMessage(tempMsg.c_str());
 		cout << getResponseMessage();
 
 		return true;
 	}
-	//disconnect to the FTP server
+	//	Disconnect to the FTP server
 	else if (command[0] == "close")		//close
 	{
 		if (isConnected == false)	// not connected
@@ -469,7 +496,7 @@ SOCKET SocketClient::createConnection(const string& ip, const string& port, bool
 	addrinfo* result = NULL;
 	addrinfo hints;
 
-	//init hints
+	//	hints: dùng cho định dạng kiểu TCP, IPV4 cho socket
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;        //ipv4
 	hints.ai_socktype = SOCK_STREAM;  //tcp
@@ -483,7 +510,9 @@ SOCKET SocketClient::createConnection(const string& ip, const string& port, bool
 		return INVALID_SOCKET;
 	}
 
-	//so lan thu, do t thay m de 10 lan, muon tat thi tat cai withRetry
+	//	Thử lại nếu kết nối không thành công
+	//withRetry == true: thử lại 10 lần
+	//withRetry == false: không thử lại
 	int maxAttempts = withRetry ? 10 : 1;
 	for (int attempt = 0; attempt < maxAttempts; ++attempt) {
 		newSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
