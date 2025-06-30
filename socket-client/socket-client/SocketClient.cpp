@@ -412,7 +412,19 @@ bool SocketClient::processCommand()
 
 	// clamscan agent.....................
 
-	//else if (command[0] == "put") {}
+	else if (command[0] == "put") 
+	{
+		string clamAVIP = "192.168.157.1";
+		const char* clamAVPort = "55555";
+
+		SOCKET newSocket = createConnection(clamAVIP, clamAVPort, true);  // true for retry
+		if (newSocket == INVALID_SOCKET) {
+			isQuit = true;
+			return true;
+		}
+
+		
+	}
 	//else if (command[0] == "mput") {}
 	
 	else
