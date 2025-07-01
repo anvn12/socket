@@ -18,6 +18,8 @@ private:
 	//const char* port = "55555";	// custom port for clamav server
 	unsigned int port = 55555;	// custom port for clamav server
 
+	string getResponseMessage(SOCKET& s);
+	void sendCommandMessage(SOCKET& s, const char*);
 public:
 	SocketServer() {}
 	~SocketServer() {}
@@ -37,7 +39,6 @@ public:
 
 
 	void scan();
-
 
 };
 

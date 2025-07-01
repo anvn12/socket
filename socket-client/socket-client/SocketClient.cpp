@@ -1,4 +1,4 @@
-#include "SocketClient.h"
+﻿#include "SocketClient.h"
 #include "General.h"
 
 void SocketClient::close() {
@@ -414,19 +414,84 @@ bool SocketClient::processCommand()
 
 	else if (command[0] == "put") 
 	{
+		// put <filePath>
+		// 
+		// if not connect
+		if (isConnected == false)
+		{
+			cout << "Not connected.\n";
+			return true;
+		}
+		if (command.size() != 2)
+		{
+			return false;
+		}
+
+		//https://cplusplus.com/doc/tutorial/files/
+		//  MỞ file
+		string filePath = command[1];
+		ifstream fin;
+		fin.open(filePath, ios::binary | ios::ate);	//file nhị phân để đọc nội dung -> chuyển nội dung đi
+											// mở từ cuối file để lấy kích thước nhanh hơn
+		if (!fin.is_open())
+		{
+			cout << "File not found or cannot open file.\n";
+			return true;
+		}
+		
+		//  Lấy kích thươc tệp (byte)
+		uint64_t fileSize = fin.tellg();
+	
+		//  Dời tới đầu file để đọc
+		fin.seekg(0, ios::beg);
+
+
+
+		//	Truyền file qua cho ClamAV Agent để quét
+
 		SOCKET clamavSocket = createConnection(serverIP, clamavPort, true);  // true for retry
 		if (clamavSocket == INVALID_SOCKET) {
+			cerr << "Cannot init socket\n";
 			isQuit = true;
 			return true;
 		}
 
-		string msg = "HEllo\r\n";
-
-		int iResult{};
-		sendCommandMessage(msg.c_str());
 		
+		//  Chuyển tên file
+		//  Chuyển kích thước qua
+		//  Chuyển nội dung file (theo từng dòng, chunk)
 
-		getResponseMessage();
+
+		//  Bên server: tạo file mới, đọc lại nội dung rồi bỏ vào file
+
+
+
+
+
+
+
+
+
+		fin.close();
+		closesocket(clamavSocket);
+
+		//char responseMessage[4097];
+		//int iResult = recv(clamavSocket, responseMessage, sizeof(responseMessage) - 1, 0);
+
+		////  Vì trả về không có \0 nên phải thêm vào
+		//if (iResult > 0) {
+		//	responseMessage[iResult] = '\0';
+		//}
+		//cout << responseMessage;
+
+
+
+
+
+
+
+		// OK -> truyen cho FTP server
+
 		return true;
 	}
 	//else if (command[0] == "mput") {}

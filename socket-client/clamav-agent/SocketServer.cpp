@@ -1,6 +1,25 @@
 ﻿#include "SocketServer.h"
 
+string SocketServer::getResponseMessage(SOCKET& s)
+{
+	char responseMessage[4097];
+	int iResult = recv(s, responseMessage, sizeof(responseMessage) - 1, 0);
 
+	if (iResult > 0) {
+		responseMessage[iResult] = '\0';
+		return string(responseMessage); //tra ve gia tri de xu ly may cai khac
+	}
+
+	return "";
+}
+
+void SocketServer::sendCommandMessage(SOCKET& s, const char* msg)
+{
+	int iResult = send(s, msg, (int)strlen(msg), 0);
+	if (iResult == SOCKET_ERROR) {
+		printf("send failed: %d\n", WSAGetLastError());
+	}
+}
 
 //	Đóng socket
 void SocketServer::close() {
@@ -114,18 +133,19 @@ bool SocketServer::clamavAccept()
 	ZeroMemory(host, NI_MAXHOST);
 	ZeroMemory(service, NI_MAXSERV);
 
-	// lấy tên máy kết nối, in ra
-	if (getnameinfo((sockaddr*)&client, clientSize, host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0)
-	{
-		cout << host << " connected on " << service << endl;
-	}
-	else
-	{
-		// nếu không lấy tên được thì in IP
-		inet_ntop(AF_INET, &client.sin_addr, host, NI_MAXHOST);
-		cout << host << " connected on port " << ntohs(client.sin_port) << endl;
-	}
-
+	//===== Phần này có thể không cần
+	//
+	//// lấy tên máy kết nối, in ra
+	//if (getnameinfo((sockaddr*)&client, clientSize, host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0)
+	//{
+	//	cout << host << " connected on " << service << endl;
+	//}
+	//else
+	//{
+	//	// nếu không lấy tên được thì in IP
+	//	inet_ntop(AF_INET, &client.sin_addr, host, NI_MAXHOST);
+	//	cout << host << " connected on port " << ntohs(client.sin_port) << endl;
+	//}===============
 
 	//	Chấp nhận xong thì không cần server socket nữa
 	close();
@@ -133,7 +153,14 @@ bool SocketServer::clamavAccept()
 	//	Chuyển socket_ về clientSocket để thực hiện tao tác xử lý (nhận, truyền lệnh, phản hồi,...)
 	socket_ = clientSocket;
 
+
+	//  Trả lại dòng kết nối agent cho client
+	string msg = "Hello";
+
+	sendCommandMessage(socket_, msg.c_str());
+
 	
+
 	return true;
 }
 

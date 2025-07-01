@@ -7,6 +7,8 @@
 #include <vector>
 #include <chrono>
 
+#include <fstream>
+
 #pragma comment(lib, "Ws2_32.lib")
 using namespace std;
 
@@ -32,6 +34,10 @@ private:
 	//for port mode
 	SOCKET createListeningSocket(string& localIP, int& localPort);
 	string formatPORTCommand(const string& ip, int port);
+
+
+	string getResponseMessage();
+	void sendCommandMessage(const char*);
 public:
 	SocketClient() {}
 	~SocketClient() {}
@@ -46,8 +52,6 @@ public:
 
 	void inputCommand();
 	bool processCommand();	// false: invalid command
-	string getResponseMessage();
-	void sendCommandMessage(const char*);
 };
 
 
