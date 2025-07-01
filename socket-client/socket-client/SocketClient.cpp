@@ -555,60 +555,47 @@ SOCKET SocketClient::createListeningSocket(string& localIP, int& localPort) {
 		return INVALID_SOCKET;
 	}
 
-	//get ip
-	char hostName[256];
-	if (gethostname(hostName, sizeof(hostName)) == SOCKET_ERROR) {
-		cerr << "Failed to get hostname: " << WSAGetLastError() << "\n";
+	//lay cai local IP cua control connection
+	sockaddr_in localAddr;
+	int addrLen = sizeof(localAddr);
+
+	//lay dia chi local cua control connection SOCKET
+	if (getsockname(socket_, (sockaddr*)&localAddr, &addrLen) == SOCKET_ERROR) {
+		cerr << "getsockname failed: " << WSAGetLastError() << endl;
 		closesocket(listenSocket);
 		return INVALID_SOCKET;
 	}
 
-	addrinfo hints, *result = nullptr;
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-
-	int iResult = getaddrinfo(hostName, nullptr, &hints, &result);
-	if (iResult != 0) {
-		cerr << "getaddrinfo failed: " << iResult << endl;
-		closesocket(listenSocket);
-		return INVALID_SOCKET;
-	}
-
-	sockaddr_in* sockaddr_ipv4 = (sockaddr_in*)result->ai_addr;
+	//doi no sang string
 	char ipStr[INET_ADDRSTRLEN];
-	if (inet_ntop(AF_INET, &(sockaddr_ipv4->sin_addr), ipStr, INET_ADDRSTRLEN) == nullptr) {
+	if (inet_ntop(AF_INET, &(localAddr.sin_addr), ipStr, INET_ADDRSTRLEN) == nullptr) {
 		cerr << "inet_ntop failed" << endl;
-		freeaddrinfo(result);
 		closesocket(listenSocket);
 		return INVALID_SOCKET;
 	}
-
 	localIP = string(ipStr);
-	freeaddrinfo(result);
 
-	//bind toi port bat ki
-	sockaddr_in addr;
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = INADDR_ANY;
-	addr.sin_port = 0; // = 0 la cho system chon
+	//bind cai ip cho giong voi control connection
+	sockaddr_in bindAddr;
+	bindAddr.sin_family = AF_INET;
+	bindAddr.sin_addr = localAddr.sin_addr; //giong voi control connection
+	bindAddr.sin_port = 0; //system tu chon
 
-	if (bind(listenSocket, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR) {
+	if (bind(listenSocket, (sockaddr*)&bindAddr, sizeof(bindAddr)) == SOCKET_ERROR) {
 		cerr << "Bind failed: " << WSAGetLastError() << endl;
 		closesocket(listenSocket);
 		return INVALID_SOCKET;
 	}
 
-	//lay cai port do
-	int addrLen = sizeof(addr);
-	if (getsockname(listenSocket, (sockaddr*)&addr, &addrLen) == SOCKET_ERROR) {
+	//lay cai port system vua assign
+	addrLen = sizeof(bindAddr);
+	if (getsockname(listenSocket, (sockaddr*)&bindAddr, &addrLen) == SOCKET_ERROR) {
 		cerr << "getsockname failed: " << WSAGetLastError() << endl;
 		closesocket(listenSocket);
 		return INVALID_SOCKET;
 	}
-	localPort = ntohs(addr.sin_port);
+	localPort = ntohs(bindAddr.sin_port);
 
-	//listen
 	if (listen(listenSocket, 1) == SOCKET_ERROR) {
 		cerr << "Listen failed: " << WSAGetLastError() << endl;
 		closesocket(listenSocket);
