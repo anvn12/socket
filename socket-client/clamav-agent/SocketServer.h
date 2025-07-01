@@ -15,7 +15,8 @@ class SocketServer final {
 private:
 	SOCKET socket_ = INVALID_SOCKET;
 	string serverIP;
-	const char* port = "5555";	// custom port for clamav server
+	//const char* port = "55555";	// custom port for clamav server
+	unsigned int port = 55555;	// custom port for clamav server
 
 public:
 	SocketServer() {}
@@ -40,7 +41,3 @@ public:
 
 };
 
-struct IPv4
-{
-	unsigned int b1, b2, b3, b4;
-};

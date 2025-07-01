@@ -21,7 +21,8 @@ private:
 	string username;
 	string password;
 
-	const char* port = "21";	// tcp
+	const char* port = "21";	// ftp
+	const char* clamavPort = "55555";
 
 
 	//bool connectToServer(addrinfo* result);

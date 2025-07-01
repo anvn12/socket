@@ -414,16 +414,20 @@ bool SocketClient::processCommand()
 
 	else if (command[0] == "put") 
 	{
-		string clamAVIP = "192.168.157.1";
-		const char* clamAVPort = "55555";
-
-		SOCKET newSocket = createConnection(clamAVIP, clamAVPort, true);  // true for retry
-		if (newSocket == INVALID_SOCKET) {
+		SOCKET clamavSocket = createConnection(serverIP, clamavPort, true);  // true for retry
+		if (clamavSocket == INVALID_SOCKET) {
 			isQuit = true;
 			return true;
 		}
 
+		string msg = "HEllo\r\n";
+
+		int iResult{};
+		sendCommandMessage(msg.c_str());
 		
+
+		getResponseMessage();
+		return true;
 	}
 	//else if (command[0] == "mput") {}
 	
