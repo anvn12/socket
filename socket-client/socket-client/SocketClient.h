@@ -7,8 +7,13 @@
 #include <vector>
 #include <chrono>
 
+#include <fstream>
+
 #pragma comment(lib, "Ws2_32.lib")
 using namespace std;
+
+#define CHUNK_SIZE 4096 // bytes
+
 
 class SocketClient final {
 private:
@@ -21,7 +26,8 @@ private:
 	string username;
 	string password;
 
-	const char* port = "21";	// tcp
+	const char* port = "21";	// ftp
+	const char* clamavPort = "55555";
 
 
 	//bool connectToServer(addrinfo* result);
@@ -40,6 +46,11 @@ private:
 	string formatPORTCommand(const string& ip, int port);
 
 
+	string getResponseMessage();
+	string getResponseMessage(SOCKET& s);
+	void sendCommandMessage(const char*);
+	void sendCommandMessage(SOCKET& s, const char* msg);
+
 public:
 	SocketClient() {}
 	~SocketClient() {}
@@ -54,8 +65,6 @@ public:
 
 	void inputCommand();
 	bool processCommand();	// false: invalid command
-	string getResponseMessage();
-	void sendCommandMessage(const char*);
 };
 
 

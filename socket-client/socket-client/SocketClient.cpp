@@ -459,7 +459,148 @@ bool SocketClient::processCommand()
 
 	// clamscan agent.....................
 
-	//else if (command[0] == "put") {}
+	else if (command[0] == "put") 
+	{
+		// put <filePath>
+		// 
+		// if not connect
+		if (isConnected == false)
+		{
+			cout << "Not connected.\n";
+			return true;
+		}
+		if (command.size() != 2)
+		{
+			return false;
+		}
+
+		//https://cplusplus.com/doc/tutorial/files/
+		//  MỞ file
+		string filePath = command[1];  // "D:\Folder A\fileA.txt"
+		ifstream fin;
+		fin.open(filePath, ios::binary | ios::ate);	//file nhị phân để đọc nội dung -> chuyển nội dung đi
+											// mở từ cuối file để lấy kích thước nhanh hơn
+		if (!fin.is_open())
+		{
+			cout << "File not found or cannot open file.\n";
+			return true;
+		}
+		
+		//  Lấy kích thươc tệp (byte)
+		uint64_t fileSize = fin.tellg();
+	
+		//  Dời tới đầu file để đọc
+		fin.seekg(0, ios::beg);
+
+
+		//filePath: D:\Folder A\fileA.txt
+		//	Get file name
+		string fileName;
+		for (int i = filePath.size() - 1; i >= 0; i--)
+		{
+			if (filePath[i] == '\\')
+			{
+				break;
+			}
+			fileName.push_back(filePath[i]);
+		}
+		reverse(fileName.begin(), fileName.end());
+
+		//	Truyền file qua cho ClamAV Agent để quét
+		//  Tạo socket để truyền, 
+		//ClamAV Agent đặt cùng với FTP server nên cùng IP, port tự đặt
+		SOCKET clamavSocket = createConnection(serverIP, clamavPort, true);  // true for retry
+		if (clamavSocket == INVALID_SOCKET) {
+			cerr << "Cannot init socket\n";
+			isQuit = true;
+			return true;
+		}
+
+
+		//  first message "Scanning: " => kết nối được agent
+		cout << getResponseMessage(clamavSocket);
+
+		//https://youtu.be/NHrk33uCzL8?si=F2rQr1mvSjYWPuHQ
+		// 
+		//  Chuyển tên file
+		sendCommandMessage(clamavSocket, fileName.c_str());
+		cout << getResponseMessage(clamavSocket);
+
+		//  Chuyển kích thước 
+		sendCommandMessage(clamavSocket, to_string(fileSize).c_str());
+		cout << getResponseMessage(clamavSocket);
+
+		//  Chuyển nội dung file theo từng chunk, tránh chuyển đi quá nhiều trong 1 lần
+		char buffer[CHUNK_SIZE];
+
+		while (!fin.eof()) 
+		{
+			// Đọc file binary theo từng chunk 
+			fin.read(buffer, CHUNK_SIZE);
+
+			int bytesRead = fin.gcount();		// số kí tự đọc được
+
+			// gửi chunk vừa đọc qua agent
+			send(clamavSocket, buffer, bytesRead, 0);
+		}
+
+		//  Bên agent: tạo file mới, đọc lại nội dung rồi bỏ vào file
+
+		cout << getResponseMessage(clamavSocket);
+
+		int iResult = stoi(getResponseMessage(clamavSocket));
+
+		// OK
+		if (iResult == 0)
+		{
+			cout << "OK\n";
+
+			// send file to ftp server
+
+
+
+
+		}
+		else if (iResult == 1)
+		{
+			cout << "Warning\n";
+		}
+		else
+		{
+			cout << "ERROR\n";
+		}
+
+
+
+
+
+
+
+
+
+
+		fin.close();
+		closesocket(clamavSocket);
+
+		//char responseMessage[4097];
+		//int iResult = recv(clamavSocket, responseMessage, sizeof(responseMessage) - 1, 0);
+
+		////  Vì trả về không có \0 nên phải thêm vào
+		//if (iResult > 0) {
+		//	responseMessage[iResult] = '\0';
+		//}
+		//cout << responseMessage;
+
+
+
+
+
+
+
+		// OK -> truyen cho FTP server
+
+		return true;
+	}
 	//else if (command[0] == "mput") {}
 	
 	else
@@ -482,9 +623,32 @@ string SocketClient::getResponseMessage()
 	return "";
 }
 
+string SocketClient::getResponseMessage(SOCKET &s)
+{
+	char responseMessage[4097];
+	int iResult = recv(s, responseMessage, sizeof(responseMessage) - 1, 0);
+
+	if (iResult > 0) {
+		responseMessage[iResult] = '\0';
+		//cout << responseMessage;
+		return string(responseMessage); //tra ve gia tri de xu ly may cai khac
+	}
+
+	return "";
+}
+
 void SocketClient::sendCommandMessage(const char* msg)
 {
 	int iResult = send(socket_, msg, (int)strlen(msg), 0);
+	if (iResult == SOCKET_ERROR) {
+		printf("send failed: %d\n", WSAGetLastError());
+		isQuit = true;
+	}
+}
+
+void SocketClient::sendCommandMessage(SOCKET& s, const char* msg)
+{
+	int iResult = send(s, msg, (int)strlen(msg), 0);
 	if (iResult == SOCKET_ERROR) {
 		printf("send failed: %d\n", WSAGetLastError());
 		isQuit = true;
