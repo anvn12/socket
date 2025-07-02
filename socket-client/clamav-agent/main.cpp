@@ -1,4 +1,9 @@
-﻿#include "WinsockManager.h"
+﻿//ClamAVAgent cùng host với FTP Server
+//Phải đảm bảo cài đặt trước ClamAV và biết vị trí thư mục lưu trữ clamscan.exe
+//Port: 55555
+
+
+#include "WinsockManager.h"
 #include "SocketServer.h"
 
 #pragma comment(lib, "Ws2_32.lib")
@@ -21,7 +26,7 @@ int main() {
 	// Create a server for connecting to server
 	SocketServer server;
 
-	// Nhập đường dẫn clamav
+	// Nhập đường dẫn clamav, chỗ thư mục chứa clamscan.exe
 	if (server.clamavInput() == false)
 	{
 		server.close();
