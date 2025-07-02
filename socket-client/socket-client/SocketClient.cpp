@@ -394,7 +394,7 @@ bool SocketClient::processCommand()
 			return true;
 		}
 
-		string portCommand = formatPORTCommand(localIP, localPort);
+		string portCommand = "PORT " + formatPORTCommand(localIP, localPort);
 		sendCommandMessage(portCommand.c_str());
 		cout << getResponseMessage();
 
@@ -617,6 +617,6 @@ string SocketClient::formatPORTCommand(const string& ip, int port) {
 	int highByte = port / 256;
 	int lowByte= port % 256;
 
-	return "PORT " + formatIP + "," + to_string(highByte) + "," + to_string(lowByte) + "\r\n";
+	return formatIP + "," + to_string(highByte) + "," + to_string(lowByte) + "\r\n";
 }
 
