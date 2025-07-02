@@ -248,9 +248,6 @@ void SocketServer::scan()
 	// clamscan return value:
 	// 0 : No virus found. 1 : Virus(es) found. 2 : Some error(s) occured.
 
-	cout << clamscanSource << endl;
-	cout << fileName << endl;
-	//string clamscanCommand = "\"" + clamscanSource + "\" --version";
 	string clamscanCommand = "cmd /C \"\"" + clamscanSource + "\" \"" + fileName + "\"\"";
 	
 	msg = "Scanning result: ";
@@ -258,4 +255,10 @@ void SocketServer::scan()
 
 	int scanResult = system(clamscanCommand.c_str());
 	sendCommandMessage(clientSocket_, to_string(scanResult).c_str());
+
+	
+	//tái sử dụng biến, nhưng dùng nó để xóa cái file đi (sau khi quét xong)
+	clamscanCommand = "cmd /C \"del ";
+	clamscanCommand += "\"" + fileName + "\"\"";
+	system(clamscanCommand.c_str());
 }

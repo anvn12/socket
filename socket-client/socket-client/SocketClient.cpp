@@ -394,7 +394,7 @@ bool SocketClient::processCommand()
 			return true;
 		}
 
-		string portCommand = "PORT " + formatPORTCommand(localIP, localPort);
+		string portCommand = formatPORTCommand(localIP, localPort);
 		sendCommandMessage(portCommand.c_str());
 		cout << getResponseMessage();
 
@@ -557,9 +557,63 @@ bool SocketClient::processCommand()
 
 			// send file to ftp server
 
+			//ftp > put "D:\a a.txt
+			//	200 PORT command successful.
+			// 
+			// command 222222222222222222222222222
+			//	150 Starting data transfer.
+			//	226 Operation successful
+			//	ftp : 5 bytes sent in 0.00Seconds 5.00Kbytes / sec.
 
 
+			// Lấy ip, port server (cái mà client đang kết nối vô)
+			string localIP;
+			int localPort;
+			SOCKET listenSocket = createListeningSocket(localIP, localPort);
+			if (listenSocket == INVALID_SOCKET) {
+				cerr << "Failed to create listening socket for PORT mode";
+				return true;
+			}
 
+			string portCommand = formatPORTCommand(localIP, localPort);
+			sendCommandMessage(portCommand.c_str());
+			cout << getResponseMessage();
+
+			//gui cai lenh STOR
+			string msg = "STOR " + fileName + "\r\n";
+			sendCommandMessage(msg.c_str());
+
+			//in cai 150 ra truoc (bắt đầu gửi cái nội dung file qua)
+			cout << getResponseMessage();
+
+			//accept incoming data connection
+			SOCKET dataSocket = accept(listenSocket, nullptr, nullptr);
+			closesocket(listenSocket);
+			if (dataSocket == INVALID_SOCKET) {
+				cerr << "Failed to accept data connection";
+				return true;
+			}
+
+			//https://stackoverflow.com/questions/5343173/returning-to-beginning-of-file-after-getline
+			//  Dời tới đầu file để đọc
+			fin.clear();		// do lúc gửi cho agent đã chạm tới eof -> clear
+			fin.seekg(0, ios::beg);
+
+			while (!fin.eof())
+			{
+				// Đọc file binary theo từng chunk 
+				fin.read(buffer, CHUNK_SIZE);
+
+				int bytesRead = fin.gcount();		// số kí tự đọc được
+
+				// gửi chunk vừa đọc qua server
+				send(dataSocket, buffer, bytesRead, 0);
+			}
+
+			//dong cai data socket
+			closesocket(dataSocket);
+
+			cout << getResponseMessage();
 		}
 		else if (iResult == 1)
 		{
@@ -781,6 +835,6 @@ string SocketClient::formatPORTCommand(const string& ip, int port) {
 	int highByte = port / 256;
 	int lowByte= port % 256;
 
-	return formatIP + "," + to_string(highByte) + "," + to_string(lowByte) + "\r\n";
+	return "PORT " + formatIP + "," + to_string(highByte) + "," + to_string(lowByte) + "\r\n";
 }
 
