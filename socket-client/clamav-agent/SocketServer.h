@@ -5,6 +5,10 @@
 #include <ws2tcpip.h>
 #include <iostream>
 
+#include <fstream>
+#include <string>
+
+
 #pragma comment(lib, "Ws2_32.lib")
 using namespace std;
 
@@ -14,6 +18,7 @@ using namespace std;
 class SocketServer final {
 private:
 	SOCKET socket_ = INVALID_SOCKET;
+	SOCKET listenSocket_ = INVALID_SOCKET;
 	string serverIP;
 	//const char* port = "55555";	// custom port for clamav server
 	unsigned int port = 55555;	// custom port for clamav server
@@ -24,6 +29,7 @@ public:
 	SocketServer() {}
 	~SocketServer() {}
 
+	void socketShutdown();
 	void close();
 
 

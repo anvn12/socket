@@ -29,6 +29,11 @@ void SocketServer::close() {
 	}
 }
 
+// Shut down send recv
+void SocketServer::socketShutdown() {
+	(socket_, SD_BOTH) == SOCKET_ERROR;
+}
+
 
 //	Init socket_ and bind the IP, port
 bool SocketServer::clamavBind() {
@@ -124,7 +129,7 @@ bool SocketServer::clamavAccept()
 	clientSocket = accept(socket_, (sockaddr*)& client, &clientSize);
 	if (clientSocket == INVALID_SOCKET) {
 		printf("accept failed: %d\n", WSAGetLastError());
-		close();
+		//close();
 		return false;
 	}
 
@@ -173,33 +178,52 @@ void SocketServer::scan()
 	msg = " (" + fileSize + " Bytes)\n";
 	sendCommandMessage(socket_, msg.c_str());
 
-	char buf[4097];
-	int byteReceived{}, iSendResult{};
+
+	//https://en.cppreference.com/w/cpp/string/basic_string/stoul
+	unsigned long long fileSizeNum = stoull(fileSize);
+
+	unsigned long long totalBytesReceived = 0;
+
+	//https://stackoverflow.com/questions/19017651/how-to-send-files-in-chunk-using-socket-c-c
+	char buffer[4096];
+	int bytesReceived{};// iSendResult{};
+
+
+	ofstream fout;
+	fout.open(fileName, ios::binary | ios::trunc);	// trunc để mở cái file là xóa hết nội dung ở trong
+
 
 	// Receive until the peer shuts down the connection
-	do {
-		ZeroMemory(buf, 4097);	
+	// bytesReceived == 0: shutdown
+	//				< 0: fail
+	// Recv until reach fileSize
+	while (totalBytesReceived < fileSizeNum)
+	{
+		// Không cần chừa chỗ cho \0
+		bytesReceived = recv(socket_, buffer, 4096, 0);
+		//cout << buffer;
 
-		byteReceived = recv(socket_, buf, 4097 - 1, 0);
-		if (byteReceived > 0) {
-			printf("Bytes received: %d\n", byteReceived);
-
-			// Echo the buffer back to the sender
-			iSendResult = send(socket_, buf, byteReceived, 0);
-			if (iSendResult == SOCKET_ERROR) {
-				printf("send failed: %d\n", WSAGetLastError());
-				close();
-				return;
-			}
-			printf("Bytes sent: %d\n", iSendResult);
-		}
-		else if (byteReceived == 0)
+		if (bytesReceived == 0)
+		{
 			printf("Connection closing...\n");
-		else {
+			break;
+		}
+		else if (bytesReceived < 0) { // < 0: fail
 			printf("recv failed: %d\n", WSAGetLastError());
-			close();
+			fout.close();
+
 			return;
 		}
 
-	} while (byteReceived > 0);
+		// > 0: receive success
+		printf("Bytes received: %d\n", bytesReceived);
+
+		fout.write(buffer, bytesReceived);
+
+		totalBytesReceived += bytesReceived;
+	} 	
+	
+	fout.close();
+	msg = "FILE RECEIVED\n";
+	sendCommandMessage(socket_, msg.c_str());
 }
