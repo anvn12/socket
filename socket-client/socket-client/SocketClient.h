@@ -12,6 +12,9 @@
 #pragma comment(lib, "Ws2_32.lib")
 using namespace std;
 
+#define CHUNK_SIZE 4096 // bytes
+
+
 class SocketClient final {
 private:
 	SOCKET socket_ = INVALID_SOCKET;
@@ -37,7 +40,9 @@ private:
 
 
 	string getResponseMessage();
+	string getResponseMessage(SOCKET& s);
 	void sendCommandMessage(const char*);
+	void sendCommandMessage(SOCKET& s, const char* msg);
 public:
 	SocketClient() {}
 	~SocketClient() {}

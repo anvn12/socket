@@ -44,7 +44,7 @@ int main() {
 
 
 
-	//server.scan();
+	server.scan();
 	
 
 	// cleanup Winsock

@@ -155,10 +155,8 @@ bool SocketServer::clamavAccept()
 
 
 	//  Trả lại dòng kết nối agent cho client
-	string msg = "Hello";
-
+	string msg = "Scanning: ";
 	sendCommandMessage(socket_, msg.c_str());
-
 	
 
 	return true;
@@ -166,6 +164,15 @@ bool SocketServer::clamavAccept()
 
 void SocketServer::scan()
 {
+	// Receive filename filesize and send response message
+	string fileName = getResponseMessage(socket_);
+	string msg = "\"" + fileName + "\"";
+	sendCommandMessage(socket_, msg.c_str());
+
+	string fileSize = getResponseMessage(socket_);
+	msg = " (" + fileSize + " Bytes)\n";
+	sendCommandMessage(socket_, msg.c_str());
+
 	char buf[4097];
 	int byteReceived{}, iSendResult{};
 
