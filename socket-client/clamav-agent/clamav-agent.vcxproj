@@ -19,11 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="General.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SocketServer.cpp" />
     <ClCompile Include="WinsockManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="General.h" />
     <ClInclude Include="SocketServer.h" />
     <ClInclude Include="WinsockManager.h" />
   </ItemGroup>

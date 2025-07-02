@@ -497,10 +497,32 @@ bool SocketClient::processCommand()
 			send(clamavSocket, buffer, bytesRead, 0);
 		}
 
+		//  Bên agent: tạo file mới, đọc lại nội dung rồi bỏ vào file
+
 		cout << getResponseMessage(clamavSocket);
 
+		int iResult = stoi(getResponseMessage(clamavSocket));
 
-		//  Bên agent: tạo file mới, đọc lại nội dung rồi bỏ vào file
+		// OK
+		if (iResult == 0)
+		{
+			cout << "OK\n";
+
+			// send file to ftp server
+
+
+
+
+		}
+		else if (iResult == 1)
+		{
+			cout << "Warning\n";
+		}
+		else
+		{
+			cout << "ERROR\n";
+		}
+
 
 
 

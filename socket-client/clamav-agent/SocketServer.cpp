@@ -1,4 +1,5 @@
 ﻿#include "SocketServer.h"
+#include "General.h"
 
 string SocketServer::getResponseMessage(SOCKET& s)
 {
@@ -23,17 +24,36 @@ void SocketServer::sendCommandMessage(SOCKET& s, const char* msg)
 
 //	Đóng socket
 void SocketServer::close() {
-	if (socket_ != INVALID_SOCKET) {
-		closesocket(socket_);
-		socket_ = INVALID_SOCKET;
+	closesocket(listenSocket_);
+	closesocket(clientSocket_);
+}
+
+
+bool SocketServer::clamavInput()
+{
+	cout << "Enter ClamAV folder: ";
+	getline(cin, clamscanSource);
+
+	// process string (erase redundant space " and split words)
+	vector<string> temp = processCommandString(clamscanSource);
+
+	if (temp.size() != 1)
+	{
+		cerr << "Invalid argument\n";
+		return false;
 	}
-}
 
-// Shut down send recv
-void SocketServer::socketShutdown() {
-	(socket_, SD_BOTH) == SOCKET_ERROR;
+	clamscanSource = temp[0] + "\\clamscan.exe"; // add clamscan
+	ifstream fin;
+	fin.open(clamscanSource);
+	if (!fin.is_open())
+	{
+		cerr << "Cannot find clamscan.exe\n";
+		return false;
+	}
+	fin.close();
+	return true;
 }
-
 
 //	Init socket_ and bind the IP, port
 bool SocketServer::clamavBind() {
@@ -41,10 +61,10 @@ bool SocketServer::clamavBind() {
 	//để làm IP cho server
 
 
-	//init socket_
-	socket_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);	//argument cuối có thể là 0: OS sẽ SOCK_STREAM -> TCP
+	//init listenSocket_
+	listenSocket_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);	//argument cuối có thể là 0: OS sẽ SOCK_STREAM -> TCP
 	
-	if (socket_ == INVALID_SOCKET) {
+	if (listenSocket_ == INVALID_SOCKET) {
 		cout << "Error at socket(): " << WSAGetLastError() << endl;
 		return false;
 	}
@@ -69,10 +89,9 @@ bool SocketServer::clamavBind() {
 
 	//for checking
 	int iResult{};	
-	iResult = bind(this->socket_, (sockaddr*)& hints, sizeof(hints));
+	iResult = bind(this->listenSocket_, (sockaddr*)& hints, sizeof(hints));
 	if (iResult == SOCKET_ERROR) {
 		cout << "bind failed with error: " << WSAGetLastError() << endl;
-		close();
 		return false;
 	}
 
@@ -107,9 +126,8 @@ bool SocketServer::clamavBind() {
 bool SocketServer::clamavListen()
 {
 	//	Lắng nghe có yêu cầu kết nối nào không
-	if (listen(socket_, SOMAXCONN) == SOCKET_ERROR) {
+	if (listen(listenSocket_, SOMAXCONN) == SOCKET_ERROR) {
 		cout << "Listen failed with error: " << WSAGetLastError() << endl;
-		close();
 		return false;
 	}
 	return true;
@@ -123,13 +141,13 @@ bool SocketServer::clamavAccept()
 	int clientSize = sizeof(client);
 
 	//	Tạo một socket tạm để đồng ý kết nối
-	SOCKET clientSocket = INVALID_SOCKET;
+	//SOCKET clientSocket = INVALID_SOCKET;
 
 	// Accept a client socket
-	clientSocket = accept(socket_, (sockaddr*)& client, &clientSize);
-	if (clientSocket == INVALID_SOCKET) {
+	clientSocket_ = accept(listenSocket_, (sockaddr*)& client, &clientSize);
+	if (clientSocket_ == INVALID_SOCKET) {
 		printf("accept failed: %d\n", WSAGetLastError());
-		//close();
+		close();
 		return false;
 	}
 
@@ -153,15 +171,15 @@ bool SocketServer::clamavAccept()
 	//}===============
 
 	//	Chấp nhận xong thì không cần server socket nữa
-	close();
+	//closesocket(listenSocket_);
 
-	//	Chuyển socket_ về clientSocket để thực hiện tao tác xử lý (nhận, truyền lệnh, phản hồi,...)
-	socket_ = clientSocket;
+	////	Chuyển socket_ về clientSocket để thực hiện tao tác xử lý (nhận, truyền lệnh, phản hồi,...)
+	//socket_ = clientSocket;
 
 
 	//  Trả lại dòng kết nối agent cho client
 	string msg = "Scanning: ";
-	sendCommandMessage(socket_, msg.c_str());
+	sendCommandMessage(clientSocket_, msg.c_str());
 	
 
 	return true;
@@ -170,13 +188,13 @@ bool SocketServer::clamavAccept()
 void SocketServer::scan()
 {
 	// Receive filename filesize and send response message
-	string fileName = getResponseMessage(socket_);
+	string fileName = getResponseMessage(clientSocket_);
 	string msg = "\"" + fileName + "\"";
-	sendCommandMessage(socket_, msg.c_str());
+	sendCommandMessage(clientSocket_, msg.c_str());
 
-	string fileSize = getResponseMessage(socket_);
+	string fileSize = getResponseMessage(clientSocket_);
 	msg = " (" + fileSize + " Bytes)\n";
-	sendCommandMessage(socket_, msg.c_str());
+	sendCommandMessage(clientSocket_, msg.c_str());
 
 
 	//https://en.cppreference.com/w/cpp/string/basic_string/stoul
@@ -200,7 +218,7 @@ void SocketServer::scan()
 	while (totalBytesReceived < fileSizeNum)
 	{
 		// Không cần chừa chỗ cho \0
-		bytesReceived = recv(socket_, buffer, 4096, 0);
+		bytesReceived = recv(clientSocket_, buffer, 4096, 0);
 		//cout << buffer;
 
 		if (bytesReceived == 0)
@@ -224,6 +242,20 @@ void SocketServer::scan()
 	} 	
 	
 	fout.close();
-	msg = "FILE RECEIVED\n";
-	sendCommandMessage(socket_, msg.c_str());
+
+	// RUN clamscan <file>
+	//https://linux.die.net/man/1/clamscan#:~:text=Return%20Codes,Some%20error(s)%20occured.
+	// clamscan return value:
+	// 0 : No virus found. 1 : Virus(es) found. 2 : Some error(s) occured.
+
+	cout << clamscanSource << endl;
+	cout << fileName << endl;
+	//string clamscanCommand = "\"" + clamscanSource + "\" --version";
+	string clamscanCommand = "cmd /C \"\"" + clamscanSource + "\" \"" + fileName + "\"\"";
+	
+	msg = "Scanning result: ";
+	sendCommandMessage(clientSocket_, msg.c_str());
+
+	int scanResult = system(clamscanCommand.c_str());
+	sendCommandMessage(clientSocket_, to_string(scanResult).c_str());
 }

@@ -13,12 +13,23 @@ int main() {
 		return 1;
 	}
 
+
+
 	// Vì client theo dạng tcp, ipv4 nên server cũng theo dạng tcp, ipv4
 
 
 	// Create a server for connecting to server
 	SocketServer server;
 
+	// Nhập đường dẫn clamav
+	if (server.clamavInput() == false)
+	{
+		server.close();
+		winsockManager.cleanup();
+		return 1;
+	}
+
+	 
 	//	Khởi tạo, ràng buộc IP port
 	if (server.clamavBind() == false)
 	{
@@ -30,7 +41,6 @@ int main() {
 	//	Lắng nghe kết nối
 	if (server.clamavListen() == false)
 	{
-		server.socketShutdown();
 		server.close();
 		winsockManager.cleanup();
 		return 1;
@@ -38,25 +48,17 @@ int main() {
 
 	while (true)
 	{
-
-		// Chấp nhận kết nối
+		// Chấp nhận kết nối (tức là khi có ai đó kết nối vô thì chấp nhận)
 		if (server.clamavAccept() == false)
 		{
-			//server.socketShutdown();
-			//server.close();
-			//winsockManager.cleanup();
-			//return 1;
 			continue;
 		}
 	
 		// clamscan
 		server.scan();
-
-
 	}
-	server.socketShutdown();
-	server.close();
 
+	server.close();
 	// cleanup Winsock
 	winsockManager.cleanup();
 	return 0;

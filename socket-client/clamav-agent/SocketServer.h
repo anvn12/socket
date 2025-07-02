@@ -17,24 +17,31 @@ using namespace std;
 
 class SocketServer final {
 private:
-	SOCKET socket_ = INVALID_SOCKET;
-	SOCKET listenSocket_ = INVALID_SOCKET;
+	SOCKET clientSocket_ = INVALID_SOCKET;	//socket dùng để tương tác với client
+	SOCKET listenSocket_ = INVALID_SOCKET;	//socket dùng để bind, listen
 	string serverIP;
 	//const char* port = "55555";	// custom port for clamav server
 	unsigned int port = 55555;	// custom port for clamav server
 
+
+	string clamscanSource;
+
+
 	string getResponseMessage(SOCKET& s);
 	void sendCommandMessage(SOCKET& s, const char*);
+
+
 public:
 	SocketServer() {}
 	~SocketServer() {}
 
-	void socketShutdown();
 	void close();
 
 
+	bool clamavInput();
+
 	//	False: thất bại trong thực hiện chức năng
-	//init socket_ and bind the ip
+	//init listenSocket_ and bind the ip
 	bool clamavBind();
 
 	//server listens for connection
