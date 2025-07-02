@@ -49,31 +49,41 @@ void SocketClient::inputCommand() {
 //	return true;
 //}
 
-// invalid command => return false
 bool SocketClient::processCommand()
 {
-	//connect to the FTP server
+	//	Muốn hiện câu "invalid command" => return false
+	// 
+	//	Mỗi hàm sẽ gửi 1 số command cho ftp server, server sẽ nhận command
+	//làm công việc tương ứng, sau đó phản hồi (response) lại.
+
+
+	//	Connect to the FTP server
 	if (command[0] == "open") // open <IP>
 	{
+		//	Nếu đã kết nối thì không kết nối lại
 		if (isConnected == true)
 		{
 			cout << "Already connected to " << serverIP << ", disconnect first.\n";
 			return true;
 		}
 
+		//	Nếu số lượng argument khác 2 (câu lệnh đúng theo kiểu: "open <IP>")
 		if (command.size() != 2)
 		{
 			//cout << "Invalid command.\n";
 			return false;
 		}
 
+		//	open <IP>: command[1] chỉnh là <IP>
+		//	Kiểm tra IP có hợp lệ không
 		serverIP = command[1];
 		if (isValidIP(serverIP) == false)
 		{
 			return true;
 		}
 
-
+		//========================================================================
+		
 		////hints: give the supported type (IPV4 TCP)
 		//addrinfo* result = NULL, hints;
 		//memset(&hints, 0, sizeof(hints));	//clear all data of hints
@@ -102,6 +112,9 @@ bool SocketClient::processCommand()
 		//std::cout << "Connected to " << serverIP << endl;
 		//freeaddrinfo(result);
 
+		//========================================================================
+
+
 		SOCKET newSocket = createConnection(serverIP, port, true);  // true for retry
 		if (newSocket == INVALID_SOCKET) {
 			isQuit = true;
@@ -109,33 +122,47 @@ bool SocketClient::processCommand()
 		}
 
 		socket_ = newSocket;
+
+		//	Kết nối thành công
 		isConnected = true;
 		cout << "Connected to " << serverIP << endl;
 
+		//	Nhận tin nhắn phản hồi cho việc kết nối thành công
 		cout << getResponseMessage();
 
-		// input username and password
+		//	Định dạng việc gửi command sang UTF8
+		//nhằm đảm bảo các command không bị sai định dạng
 		sendCommandMessage("OPTS UTF8 ON\r\n");
-		cout << getResponseMessage();
+		cout << getResponseMessage();		//tin nhắn phản hồi cho UTF8
 
+
+		//	Yêu cầu nhập username
 		cout << "Username: ";
 		getline(cin, username);
 
+
+		//	Câu command để gửi username cho FTP server
 		string tempMsg = "USER " + username + "\r\n";
 
+		//	Gửi command và nhận phản hồi
 		sendCommandMessage(tempMsg.c_str());
 		cout << getResponseMessage();
 
+		
+		//	Nhập password
 		cout << "Password: ";
 		getline(cin, password);
+
+		//	Câu command để gửi password cho FTP server
 		tempMsg = "PASS " + password + "\r\n";
 
+		//	Gửi command và nhận phản hồi
 		sendCommandMessage(tempMsg.c_str());
 		cout << getResponseMessage();
 
 		return true;
 	}
-	//disconnect to the FTP server
+	//	Disconnect to the FTP server
 	else if (command[0] == "close")		//close
 	{
 		if (isConnected == false)	// not connected
@@ -223,78 +250,100 @@ bool SocketClient::processCommand()
 	//change directory
 	else if (command[0] == "cd") 
 	{
-		// if not connect
-		if (isConnected == false)
-		{
-			cout << "Not connected.\n";
+		if (!isConnected) { 
+			cout << "Not connected.\n"; 
+			return true; 
+		}
+		string folder = getArgOrPrompt(command, 1, "Remote directory: ");
+		if (folder.empty()) {
+			cout << "No directory was entered.\n";
 			return true;
 		}
-
-		string folderName;
-		if (command.size() == 1) { //enter cd, then enter the folder, 
-			cout << "Remote directory ";
-			getline(cin, folderName);
-
-			if (folderName.empty()) {
-				cout << "No dicrectory was entered.\n";
-				return true;
-			}
-			//xu ly cd, "vk iu dau", co dau "" noi chung
-			if (folderName.front() == '"' && folderName.back() == '"' && folderName.length() > 1) {
-				folderName = folderName.substr(1, folderName.length() - 2);
-			}
-		}
-		else { //enter cd foldername
-			if (command[1].front() == '"') { //check xem co phai dang " " hay 0, phai thi tach ra
-				folderName = command[1].substr(1); //xoa cai " o dau 
-				for (size_t i = 2; i < command.size(); i++) {
-					folderName += " " + command[i];
-				}
-				if (!folderName.empty() && folderName.back() == '"') {
-					folderName.pop_back();
-				}
-			}
-			else if (command.size() == 2) {
-				folderName = command[1];
-			}
-			else {
-				return false; //command size khac 1 va 2 
-			}
-		}
-
-
-		string msg = "CWD " + folderName + "\r\n";
-
-		sendCommandMessage(msg.c_str());
+		sendCommandMessage(("CWD " + folder + "\r\n").c_str());
 		cout << getResponseMessage();
-
 		return true;
 	}
 	//Create folder
 	else if (command[0] == "mkdir") 
 	{
-		// if not connect
-		if (isConnected == false)
-		{
+		if (!isConnected) { 
+			cout << "Not connected.\n"; 
+			return true; 
+		}
+		string folder = getArgOrPrompt(command, 1, "Folder name: ");
+		if (folder.empty()) {
+			cout << "No folder name was entered.\n";
+			return true;
+		}
+		sendCommandMessage(("XMKD " + folder + "\r\n").c_str());
+		cout << getResponseMessage();
+		return true;
+	}
+	//remove folder
+	else if (command[0] == "rmdir") {
+		if (!isConnected) { 
+			cout << "Not connected.\n"; 
+			return true; 
+		}
+		string folder = getArgOrPrompt(command, 1, "Folder name: ");
+		if (folder.empty()) {
+			cout << "No folder name was entered.\n";
+			return true;
+		}
+		sendCommandMessage(("XRMD " + folder + "\r\n").c_str());
+		cout << getResponseMessage();
+		return true;
+	}
+	//delete a file
+	else if (command[0] == "delete") {
+		if (!isConnected) { 
+			cout << "Not connected.\n"; 
+			return true; 
+		}
+		string file = getArgOrPrompt(command, 1, "Enter file name: ");
+		if (file.empty()) {
+			cout << "No file name was entered.\n";
+			return true;
+		}
+		sendCommandMessage(("DELE " + file + "\r\n").c_str());
+		cout << getResponseMessage();
+		return true;
+	}
+	//rename kiểu interactive, là nhập rename xong nhập từng cái name
+	//chứ dùng kiểu rename filename newname thì không được, t làm 1 lồn lỗi
+	else if (command[0] == "rename") {
+		if (!isConnected) {
 			cout << "Not connected.\n";
 			return true;
 		}
 
-		if (command.size() != 2)
-		{
+		if (command.size() != 1) {
 			return false;
 		}
 
-		string folderName = command[1];
+		string originalName, newName;
+		cout << "From name: ";
+		getline(cin, originalName);
+		if (originalName.empty()) {
+			cout << "No source name was entered.\n";
+			return true;
+		}
 
-		string msg = "XMKD " + folderName + "\r\n";
+		cout << "To name: ";
+		getline(cin, newName);
+		if (newName.empty()) {
+			cout << "No new name was entered.\n";
+			return true;
+		}
 
-		sendCommandMessage(msg.c_str());
-		cout << getResponseMessage();
+
+		sendCommandMessage(("RNFR " + originalName + "\r\n").c_str());
+		cout << getResponseMessage(); 
+		sendCommandMessage(("RNTO " + newName + "\r\n").c_str());
+		cout << getResponseMessage();  
 
 		return true;
 	}
-	
 	//co 2 loai conenction la control conenction voi data conenction
 	//port 21 la de control connection
 	//data connection la cho cac lenh lien quan den thay doi data,.. nhu LIST, RETR, STOR nen can 1 cai port khac, can phai lay cai port voi ip khac 
@@ -345,7 +394,7 @@ bool SocketClient::processCommand()
 			return true;
 		}
 
-		string portCommand = formatPORTCommand(localIP, localPort);
+		string portCommand = "PORT " + formatPORTCommand(localIP, localPort);
 		sendCommandMessage(portCommand.c_str());
 		cout << getResponseMessage();
 
@@ -397,9 +446,7 @@ bool SocketClient::processCommand()
 
 		return true;
 	}
-	//else if (command[0] == "rmdir") {}
-	//else if (command[0] == "delete") {}
-	//else if (command[0] == "rename") {}
+
 	//else if (command[0] == "get" || command[0] == "recv") {}
 	//else if (command[0] == "mget") {}
 	//else if (command[0] == "prompt") {}
@@ -613,7 +660,7 @@ SOCKET SocketClient::createConnection(const string& ip, const string& port, bool
 	addrinfo* result = NULL;
 	addrinfo hints;
 
-	//init hints
+	//	hints: dùng cho định dạng kiểu TCP, IPV4 cho socket
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;        //ipv4
 	hints.ai_socktype = SOCK_STREAM;  //tcp
@@ -627,7 +674,9 @@ SOCKET SocketClient::createConnection(const string& ip, const string& port, bool
 		return INVALID_SOCKET;
 	}
 
-	//so lan thu, do t thay m de 10 lan, muon tat thi tat cai withRetry
+	//	Thử lại nếu kết nối không thành công
+	//withRetry == true: thử lại 10 lần
+	//withRetry == false: không thử lại
 	int maxAttempts = withRetry ? 10 : 1;
 	for (int attempt = 0; attempt < maxAttempts; ++attempt) {
 		newSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
@@ -670,60 +719,47 @@ SOCKET SocketClient::createListeningSocket(string& localIP, int& localPort) {
 		return INVALID_SOCKET;
 	}
 
-	//get ip
-	char hostName[256];
-	if (gethostname(hostName, sizeof(hostName)) == SOCKET_ERROR) {
-		cerr << "Failed to get hostname: " << WSAGetLastError() << "\n";
+	//lay cai local IP cua control connection
+	sockaddr_in localAddr;
+	int addrLen = sizeof(localAddr);
+
+	//lay dia chi local cua control connection SOCKET
+	if (getsockname(socket_, (sockaddr*)&localAddr, &addrLen) == SOCKET_ERROR) {
+		cerr << "getsockname failed: " << WSAGetLastError() << endl;
 		closesocket(listenSocket);
 		return INVALID_SOCKET;
 	}
 
-	addrinfo hints, *result = nullptr;
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-
-	int iResult = getaddrinfo(hostName, nullptr, &hints, &result);
-	if (iResult != 0) {
-		cerr << "getaddrinfo failed: " << iResult << endl;
-		closesocket(listenSocket);
-		return INVALID_SOCKET;
-	}
-
-	sockaddr_in* sockaddr_ipv4 = (sockaddr_in*)result->ai_addr;
+	//doi no sang string
 	char ipStr[INET_ADDRSTRLEN];
-	if (inet_ntop(AF_INET, &(sockaddr_ipv4->sin_addr), ipStr, INET_ADDRSTRLEN) == nullptr) {
+	if (inet_ntop(AF_INET, &(localAddr.sin_addr), ipStr, INET_ADDRSTRLEN) == nullptr) {
 		cerr << "inet_ntop failed" << endl;
-		freeaddrinfo(result);
 		closesocket(listenSocket);
 		return INVALID_SOCKET;
 	}
-
 	localIP = string(ipStr);
-	freeaddrinfo(result);
 
-	//bind toi port bat ki
-	sockaddr_in addr;
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = INADDR_ANY;
-	addr.sin_port = 0; // = 0 la cho system chon
+	//bind cai ip cho giong voi control connection
+	sockaddr_in bindAddr;
+	bindAddr.sin_family = AF_INET;
+	bindAddr.sin_addr = localAddr.sin_addr; //giong voi control connection
+	bindAddr.sin_port = 0; //system tu chon
 
-	if (bind(listenSocket, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR) {
+	if (bind(listenSocket, (sockaddr*)&bindAddr, sizeof(bindAddr)) == SOCKET_ERROR) {
 		cerr << "Bind failed: " << WSAGetLastError() << endl;
 		closesocket(listenSocket);
 		return INVALID_SOCKET;
 	}
 
-	//lay cai port do
-	int addrLen = sizeof(addr);
-	if (getsockname(listenSocket, (sockaddr*)&addr, &addrLen) == SOCKET_ERROR) {
+	//lay cai port system vua assign
+	addrLen = sizeof(bindAddr);
+	if (getsockname(listenSocket, (sockaddr*)&bindAddr, &addrLen) == SOCKET_ERROR) {
 		cerr << "getsockname failed: " << WSAGetLastError() << endl;
 		closesocket(listenSocket);
 		return INVALID_SOCKET;
 	}
-	localPort = ntohs(addr.sin_port);
+	localPort = ntohs(bindAddr.sin_port);
 
-	//listen
 	if (listen(listenSocket, 1) == SOCKET_ERROR) {
 		cerr << "Listen failed: " << WSAGetLastError() << endl;
 		closesocket(listenSocket);
@@ -745,5 +781,6 @@ string SocketClient::formatPORTCommand(const string& ip, int port) {
 	int highByte = port / 256;
 	int lowByte= port % 256;
 
-	return "PORT " + formatIP + "," + to_string(highByte) + "," + to_string(lowByte) + "\r\n";
+	return formatIP + "," + to_string(highByte) + "," + to_string(lowByte) + "\r\n";
 }
+

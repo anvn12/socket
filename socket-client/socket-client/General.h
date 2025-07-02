@@ -17,3 +17,6 @@ bool isValidIP(string ip);
 bool isNum(string temp);
 
 pair<string, string> parsePASVResponse(const string& response);
+
+string getArgOrPrompt(const vector<string>& cmd, size_t startIdx, const string& promptMsg);
+
