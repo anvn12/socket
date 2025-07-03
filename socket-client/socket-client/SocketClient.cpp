@@ -363,27 +363,27 @@ bool SocketClient::processCommand()
 		return true;
 	}
 
-	else if (command[0] == "help" || command[0] == "?")
-	{
-		if (command.size() != 1) {
-			return false;
-		}
+	//else if (command[0] == "help" || command[0] == "?")
+	//{
+	//	if (command.size() != 1) {
+	//		return false;
+	//	}
 
-		
-		// Hiển thị toàn bộ lệnh
-		std::cout << "Commands may be abbreviated. Commands are:\n\n";
-		std::cout << "               delete         literal        prompt         send\n";
-		std::cout << "?              debug          ls             put            status\n";
-		std::cout << "append         dir            mdelete        pwd            trace\n";
-		std::cout << "ascii          disconnect     mdir           quit           type\n";
-		std::cout << "bell           get            mget           quote          user\n";
-		std::cout << "binary         glob           mkdir          recv           verbose\n";
-		std::cout << "bye            hash           mls            remotehelp     \n";
-		std::cout << "cd             help           mput           rename         \n";
-		std::cout << "close          lcd            open           rmdir          \n";
+	//	
+	//	// Hiển thị toàn bộ lệnh
+	//	std::cout << "Commands may be abbreviated. Commands are:\n\n";
+	//	std::cout << "               delete         literal        prompt         send\n";
+	//	std::cout << "?              debug          ls             put            status\n";
+	//	std::cout << "append         dir            mdelete        pwd            trace\n";
+	//	std::cout << "ascii          disconnect     mdir           quit           type\n";
+	//	std::cout << "bell           get            mget           quote          user\n";
+	//	std::cout << "binary         glob           mkdir          recv           verbose\n";
+	//	std::cout << "bye            hash           mls            remotehelp     \n";
+	//	std::cout << "cd             help           mput           rename         \n";
+	//	std::cout << "close          lcd            open           rmdir          \n";
 
-		return true;
-	}
+	//	return true;
+	//}
 	//co 2 loai conenction la control conenction voi data conenction
 	//port 21 la de control connection
 	//data connection la cho cac lenh lien quan den thay doi data,.. nhu LIST, RETR, STOR nen can 1 cai port khac, can phai lay cai port voi ip khac 
@@ -495,6 +495,41 @@ bool SocketClient::processCommand()
 	//else if (command[0] == "passive") {}
 	//else if (command[0] == "help" || command[0] == "?") {}
 
+	// bật/tắt việc hỏi xác nhận từng file khi dùng mget/mput
+	else if (command[0] == "prompt") {
+		if (command.size() != 1) return false;
+		promptMode = !promptMode;
+		cout << "Interactive prompting " << (promptMode ? "on" : "off") << ".\n";
+		return true;
+	}
+
+	// tải 1 file từ FTP server về client
+	else if (command[0] == "get" || command[0] == "recv") {
+		if (!isConnected) { cout << "Not connected.\n"; return true; }
+		string filename = getArgOrPrompt(command, 1, "Remote file name: ");
+		if (filename.empty()) return true;
+		get1File(filename);
+		return true;
+	}
+
+	// tải nhiều file từ FTP server
+	else if (command[0] == "mget") {
+		if (!isConnected) { cout << "Not connected.\n"; return true; }
+		if (command.size() < 2) return false;
+
+		for (size_t i = 1; i < command.size(); ++i) {
+			string filename = command[i];
+			if (promptMode) {
+				cout << "Get " << filename << "? ";
+				string res;
+				getline(cin, res);
+				if (res != "y" && res != "Y") continue;
+			}
+			get1File(filename);
+			cout << "\n";
+		}
+		return true;
+	}
 	
 
 	// clamscan agent.....................
@@ -895,6 +930,62 @@ string SocketClient::formatPORTCommand(const string& ip, int port) {
 
 	return "PORT " + formatIP + "," + to_string(highByte) + "," + to_string(lowByte) + "\r\n";
 }
+
+// Tải 1 file từ server về client
+void SocketClient::get1File(const string& filename) {
+	cout << "Downloading: " << filename << "\n";
+
+	// Tạo socket chờ kết nối (PORT mode)
+	string localIP;
+	int localPort;
+	SOCKET listenSocket = createListeningSocket(localIP, localPort);
+	if (listenSocket == INVALID_SOCKET) {
+		cerr << "Failed to create listening socket.\n";
+		return;
+	}
+
+	// Gửi PORT command cho server để nó biết nơi gửi dữ liệu
+	string portCmd = formatPORTCommand(localIP, localPort);
+	sendCommandMessage(portCmd.c_str());
+	cout << getResponseMessage();
+
+	// Gửi lệnh yêu cầu tải file
+	sendCommandMessage(("RETR " + filename + "\r\n").c_str());
+	cout << getResponseMessage(); // 150
+
+	// Chờ server kết nối lại vào data socket
+	SOCKET dataSocket = accept(listenSocket, nullptr, nullptr);
+	closesocket(listenSocket);\
+
+	if (dataSocket == INVALID_SOCKET) {
+		cerr << "Failed to accept data connection\n";
+		return;
+	}
+
+	// tạo file để ghi
+	ofstream fout(filename, ios::binary);
+	if (!fout.is_open()) {
+		cerr << "Cannot open file to write\n";
+		closesocket(dataSocket);
+		return;
+	}
+
+	// Nhận từng phần dữ liệu và ghi vào file
+	char buffer[CHUNK_SIZE];
+	int bytesReceived;
+	while ((bytesReceived = recv(dataSocket, buffer, sizeof(buffer), 0)) > 0) {
+		fout.write(buffer, bytesReceived);
+	}
+
+	// Đóng file và socket
+	fout.close();
+	shutdown(dataSocket, SD_BOTH);
+	closesocket(dataSocket);
+
+	// Nhận thông báo cuối cùng
+	cout << getResponseMessage(); // 226
+}
+
 
 void SocketClient::put1File(const string& filePath) // "D:\Folder A\fileA.txt"
 {
