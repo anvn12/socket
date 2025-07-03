@@ -51,6 +51,9 @@ private:
 	void sendCommandMessage(const char*);
 	void sendCommandMessage(SOCKET& s, const char* msg);
 
+
+	void put1File(const string& filePath);
+
 public:
 	SocketClient() {}
 	~SocketClient() {}
