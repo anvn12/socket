@@ -344,6 +344,47 @@ bool SocketClient::processCommand()
 
 		return true;
 	}
+
+	else if (command[0] == "status")
+	{
+		if (command.size() != 1) {
+			return false;
+		}
+
+		if (isConnected) {
+			cout << "Connected to " << serverIP << ".\n";
+			cout << "Type: ascii; Verbose: On ; Bell: Off ; Prompting: On ; Globbing: On\n"; //cái ascii có thể thay đổi lúc làm xong ascii/binary
+			cout << "Debugging: Off ; Hash mark printing: Off .\n";
+		}
+		else {
+			cout << "Not connected.\n";
+		}
+
+		return true;
+	}
+
+	else if (command[0] == "help" || command[0] == "?")
+	{
+		if (command.size() > 2) {
+			return false;
+		}
+
+		else {
+			// Hiển thị toàn bộ lệnh
+			cout << "Commands may be abbreviated. Commands are:\n\n";
+			cout << "               delete         literal        prompt         send\n";
+			cout << "?              debug          ls             put            status\n";
+			cout << "append         dir            mdelete        pwd            trace\n";
+			cout << "ascii          disconnect     mdir           quit           type\n";
+			cout << "bell           get            mget           quote          user\n";
+			cout << "binary         glob           mkdir          recv           verbose\n";
+			cout << "bye            hash           mls            remotehelp     \n";
+			cout << "cd             help           mput           rename         \n";
+			cout << "close          lcd            open           rmdir          \n";
+		}
+
+		return true;
+	}
 	//co 2 loai conenction la control conenction voi data conenction
 	//port 21 la de control connection
 	//data connection la cho cac lenh lien quan den thay doi data,.. nhu LIST, RETR, STOR nen can 1 cai port khac, can phai lay cai port voi ip khac 
