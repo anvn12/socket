@@ -365,23 +365,22 @@ bool SocketClient::processCommand()
 
 	else if (command[0] == "help" || command[0] == "?")
 	{
-		if (command.size() > 2) {
+		if (command.size() != 1) {
 			return false;
 		}
 
-		else {
-			// Hiển thị toàn bộ lệnh
-			cout << "Commands may be abbreviated. Commands are:\n\n";
-			cout << "               delete         literal        prompt         send\n";
-			cout << "?              debug          ls             put            status\n";
-			cout << "append         dir            mdelete        pwd            trace\n";
-			cout << "ascii          disconnect     mdir           quit           type\n";
-			cout << "bell           get            mget           quote          user\n";
-			cout << "binary         glob           mkdir          recv           verbose\n";
-			cout << "bye            hash           mls            remotehelp     \n";
-			cout << "cd             help           mput           rename         \n";
-			cout << "close          lcd            open           rmdir          \n";
-		}
+		
+		// Hiển thị toàn bộ lệnh
+		std::cout << "Commands may be abbreviated. Commands are:\n\n";
+		std::cout << "               delete         literal        prompt         send\n";
+		std::cout << "?              debug          ls             put            status\n";
+		std::cout << "append         dir            mdelete        pwd            trace\n";
+		std::cout << "ascii          disconnect     mdir           quit           type\n";
+		std::cout << "bell           get            mget           quote          user\n";
+		std::cout << "binary         glob           mkdir          recv           verbose\n";
+		std::cout << "bye            hash           mls            remotehelp     \n";
+		std::cout << "cd             help           mput           rename         \n";
+		std::cout << "close          lcd            open           rmdir          \n";
 
 		return true;
 	}
