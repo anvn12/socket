@@ -52,6 +52,10 @@ bool SocketServer::clamavInput()
 		return false;
 	}
 	fin.close();
+
+	cout << "===ClamAV Agent===\n";
+	cout << "Waiting for file...\n";
+
 	return true;
 }
 
@@ -140,9 +144,6 @@ bool SocketServer::clamavAccept()
 	sockaddr_in client;
 	int clientSize = sizeof(client);
 
-	//	Tạo một socket tạm để đồng ý kết nối
-	//SOCKET clientSocket = INVALID_SOCKET;
-
 	// Accept a client socket
 	clientSocket_ = accept(listenSocket_, (sockaddr*)& client, &clientSize);
 	if (clientSocket_ == INVALID_SOCKET) {
@@ -170,17 +171,13 @@ bool SocketServer::clamavAccept()
 	//	cout << host << " connected on port " << ntohs(client.sin_port) << endl;
 	//}===============
 
-	//	Chấp nhận xong thì không cần server socket nữa
-	//closesocket(listenSocket_);
-
-	////	Chuyển socket_ về clientSocket để thực hiện tao tác xử lý (nhận, truyền lệnh, phản hồi,...)
-	//socket_ = clientSocket;
+	//	Chấp nhận xong thì không cần dùng server socket nữa
+	// Nhưng không closesocket vì vẫn còn giữ cái đấy để đợi đợt quét tiếp theo
 
 
 	//  Trả lại dòng kết nối agent cho client
 	string msg = "Scanning: ";
 	sendCommandMessage(clientSocket_, msg.c_str());
-	
 
 	return true;
 }
@@ -198,28 +195,48 @@ void SocketServer::scan()
 
 
 	//https://en.cppreference.com/w/cpp/string/basic_string/stoul
+	// Dùng 2 biến này để biết khi nào ghi lại hết nội dung file
 	unsigned long long fileSizeNum = stoull(fileSize);
-
 	unsigned long long totalBytesReceived = 0;
 
 	//https://stackoverflow.com/questions/19017651/how-to-send-files-in-chunk-using-socket-c-c
-	char buffer[4096];
-	int bytesReceived{};// iSendResult{};
 
+	char buffer[CHUNK_SIZE];	//biến để nhận các chunk của file, sau đó dùng để ghi lại nội dung file
+	int bytesReceived{};
+
+	// Kiểm tra thư mục tmp có tồn tại hay không
+	// Cần thư mục tmp để chưa file tạm, quét xong thì xóa bỏ (tránh xóa nhầm file code nếu trùng tên)
+	//https://www.geeksforgeeks.org/cpp/how-to-check-a-file-or-directory-exists-in-cpp/
+	const char* dir = "clamavtmp";
+
+	struct stat sb;
+
+	// Calls the function with path as argument
+	// If the file/directory exists at the path returns 0
+	// Nếu thư mục tmp không tồn tại thì tạo thư mục tmp
+	if (stat(dir, &sb) != 0)
+	{
+		//cout << "The Path is invalid!\n";
+		string mkdirCommand = "cmd /C \"mkdir " + string(dir) + "\"";
+
+		system(mkdirCommand.c_str());
+	}
+
+	// Đổi tên file sang tmp\fileName
+	fileName = string(dir) + "\\" + fileName;
 
 	ofstream fout;
 	fout.open(fileName, ios::binary | ios::trunc);	// trunc để mở cái file là xóa hết nội dung ở trong
 
 
-	// Receive until the peer shuts down the connection
+	std::cout << "Receiving file...\n";
 	// bytesReceived == 0: shutdown
 	//				< 0: fail
 	// Recv until reach fileSize
 	while (totalBytesReceived < fileSizeNum)
 	{
-		// Không cần chừa chỗ cho \0
-		bytesReceived = recv(clientSocket_, buffer, 4096, 0);
-		//cout << buffer;
+		// Không cần chừa chỗ cho \0 vì dùng write (ghi lại đúng số byte đã nhận)
+		bytesReceived = recv(clientSocket_, buffer, CHUNK_SIZE, 0);
 
 		if (bytesReceived == 0)
 		{
@@ -234,7 +251,7 @@ void SocketServer::scan()
 		}
 
 		// > 0: receive success
-		printf("Bytes received: %d\n", bytesReceived);
+		//printf("Bytes received: %d\n", bytesReceived);
 
 		fout.write(buffer, bytesReceived);
 
@@ -243,11 +260,15 @@ void SocketServer::scan()
 	
 	fout.close();
 
+	std::cout << "Received: " << totalBytesReceived << "/" << fileSizeNum << " bytes\n";
+
+
 	// RUN clamscan <file>
 	//https://linux.die.net/man/1/clamscan#:~:text=Return%20Codes,Some%20error(s)%20occured.
 	// clamscan return value:
 	// 0 : No virus found. 1 : Virus(es) found. 2 : Some error(s) occured.
 
+	std::cout << "Running clamscan\n";
 	string clamscanCommand = "cmd /C \"\"" + clamscanSource + "\" \"" + fileName + "\"\"";
 	
 	msg = "Scanning result: ";
@@ -258,7 +279,9 @@ void SocketServer::scan()
 
 	
 	//tái sử dụng biến, nhưng dùng nó để xóa cái file đi (sau khi quét xong)
-	clamscanCommand = "cmd /C \"del ";
-	clamscanCommand += "\"" + fileName + "\"\"";
+	clamscanCommand = string("cmd /C \"del ") + "\"" + fileName + "\"\"";
 	system(clamscanCommand.c_str());
+
+	cout << "\nScanning done!\n\n";
+	cout << "Waiting for file...\n";
 }

@@ -7,11 +7,11 @@
 
 #include <fstream>
 #include <string>
-
+#include <sys/stat.h>	//dùng để kiểm tra thư mục có tồn tại hay không
 
 #pragma comment(lib, "Ws2_32.lib")
+#define CHUNK_SIZE 4096 // bytes
 using namespace std;
-
 
 
 
