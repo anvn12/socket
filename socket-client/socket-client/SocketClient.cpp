@@ -505,7 +505,9 @@ bool SocketClient::processCommand()
 
 	// tải 1 file từ FTP server về client
 	else if (command[0] == "get" || command[0] == "recv") {
-		if (!isConnected) { cout << "Not connected.\n"; return true; }
+		if (!isConnected) { 
+			cout << "Not connected.\n"; return true; 
+		}
 		string filename = getArgOrPrompt(command, 1, "Remote file name: ");
 		if (filename.empty()) return true;
 		get1File(filename);
@@ -514,7 +516,9 @@ bool SocketClient::processCommand()
 
 	// tải nhiều file từ FTP server
 	else if (command[0] == "mget") {
-		if (!isConnected) { cout << "Not connected.\n"; return true; }
+		if (!isConnected) { 
+			cout << "Not connected.\n"; return true; 
+		}
 		if (command.size() < 2) return false;
 
 		for (size_t i = 1; i < command.size(); ++i) {
