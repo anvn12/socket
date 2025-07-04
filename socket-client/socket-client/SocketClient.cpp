@@ -944,6 +944,10 @@ void SocketClient::put1File(const string& filePath) // "D:\Folder A\fileA.txt"
 	//  first message "Scanning: " => kết nối được agent
 	cout << getResponseMessage(clamavSocket);
 
+	// Gửi loại truyền là Ascii hay binary qua clamav
+	sendCommandMessage(clamavSocket, "I");
+
+
 	//https://youtu.be/NHrk33uCzL8?si=F2rQr1mvSjYWPuHQ
 	// 
 	//  Chuyển tên file
@@ -1076,8 +1080,7 @@ void SocketClient::put1FileASCII(const string& filePath) // "D:\Folder A\fileA.t
 	//https://cplusplus.com/doc/tutorial/files/
 	//  MỞ file
 	ifstream fin;
-	fin.open(filePath);	//ios::binary   file nhị phân để đọc nội dung -> chuyển nội dung đi
-	//ios::ate		mở từ cuối file (để lấy kích thước nhanh hơn)
+	fin.open(filePath);
 	if (!fin.is_open())
 	{
 		cout << "File not found or cannot open file.\n";
@@ -1111,29 +1114,28 @@ void SocketClient::put1FileASCII(const string& filePath) // "D:\Folder A\fileA.t
 	//  first message "Scanning: " => kết nối được agent
 	cout << getResponseMessage(clamavSocket);
 
+
+	// Gửi loại truyền là Ascii hay binary qua clamav
+	sendCommandMessage(clamavSocket, "A");
+
+
 	//https://youtu.be/NHrk33uCzL8?si=F2rQr1mvSjYWPuHQ
 	// 
 	//  Chuyển tên file
 	sendCommandMessage(clamavSocket, fileName.c_str());
 	cout << getResponseMessage(clamavSocket);
 
-
-	//  Đọc và Chuyển nội dung file theo từng chunk, tránh chuyển đi quá nhiều trong 1 lần
+	// ASCII nên chuyển theo dòng
 	string buffer;
 	while (getline(fin, buffer))
 	{
-		// Đọc file binary theo từng chunk 
-		//fin.read(buffer, CHUNK_SIZE);
+		//thêm endline để gửi nội dung có sẵn ngăn dòng (nếu không thì thông tin bị dính liền nhau)
+		buffer += "\n";		
 
-		buffer += "\n";
-
-		//int bytesRead = fin.gcount();		// số Bytes đọc được
-
-		// gửi chunk vừa đọc qua agent
 		send(clamavSocket, buffer.c_str(), buffer.size(), 0);
 	}
 
-	// Nghỉ chuyển thì đóng
+	// Nghỉ chuyển thì đóng (tránh việc bên kia đợi recv)
 	shutdown(clamavSocket, SD_SEND);
 
 
@@ -1210,7 +1212,7 @@ void SocketClient::put1FileASCII(const string& filePath) // "D:\Folder A\fileA.t
 			send(clamavSocket, buffer.c_str(), buffer.size(), 0);
 		}
 		//dong cai data socket
-		shutdown(dataSocket, SD_BOTH);
+		shutdown(dataSocket, SD_BOTH);	// không chuyển nội dung file nữa nên đóng (đóng SD_SEND cũng được)
 		closesocket(dataSocket);
 
 		// 226 Operation successful

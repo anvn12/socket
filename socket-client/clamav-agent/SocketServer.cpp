@@ -184,196 +184,288 @@ bool SocketServer::clamavAccept()
 
 void SocketServer::scan()
 {
-	// Receive filename filesize and send response message
-	string fileName = getResponseMessage(clientSocket_);
-	string msg = "\"" + fileName + "\"";
-	sendCommandMessage(clientSocket_, msg.c_str());
-
-	string fileSize = getResponseMessage(clientSocket_);
-	msg = " (" + fileSize + " Bytes)\n";
-	sendCommandMessage(clientSocket_, msg.c_str());
-
-
-	//https://en.cppreference.com/w/cpp/string/basic_string/stoul
-	// Dùng 2 biến này để biết khi nào ghi lại hết nội dung file
-	unsigned long long fileSizeNum = stoull(fileSize);
-	unsigned long long totalBytesReceived = 0;
-
-	//https://stackoverflow.com/questions/19017651/how-to-send-files-in-chunk-using-socket-c-c
-
-	char buffer[CHUNK_SIZE];	//biến để nhận các chunk của file, sau đó dùng để ghi lại nội dung file
-	int bytesReceived{};
-
-	// Kiểm tra thư mục tmp có tồn tại hay không
-	// Cần thư mục tmp để chưa file tạm, quét xong thì xóa bỏ (tránh xóa nhầm file code nếu trùng tên)
-	//https://www.geeksforgeeks.org/cpp/how-to-check-a-file-or-directory-exists-in-cpp/
-	const char* dir = "clamavtmp";
-
-	struct stat sb;
-
-	// Calls the function with path as argument
-	// If the file/directory exists at the path returns 0
-	// Nếu thư mục tmp không tồn tại thì tạo thư mục tmp
-	if (stat(dir, &sb) != 0)
+	if (getResponseMessage(clientSocket_) == "I")
 	{
-		//cout << "The Path is invalid!\n";
-		string mkdirCommand = "cmd /C \"mkdir " + string(dir) + "\"";
+		// Receive filename filesize and send response message
+		string fileName = getResponseMessage(clientSocket_);
+		string msg = "\"" + fileName + "\"";
+		sendCommandMessage(clientSocket_, msg.c_str());
 
-		system(mkdirCommand.c_str());
-	}
-
-	// Đổi tên file sang tmp\fileName
-	fileName = string(dir) + "\\" + fileName;
-
-	ofstream fout;
-	fout.open(fileName, ios::binary | ios::trunc);	// trunc để mở cái file là xóa hết nội dung ở trong
+		string fileSize = getResponseMessage(clientSocket_);
+		msg = " (" + fileSize + " Bytes)\n";
+		sendCommandMessage(clientSocket_, msg.c_str());
 
 
-	std::cout << "Receiving file...\n";
-	// bytesReceived == 0: shutdown
-	//				< 0: fail
-	// Recv until reach fileSize
-	while (totalBytesReceived < fileSizeNum)
-	{
-		// Không cần chừa chỗ cho \0 vì dùng write (ghi lại đúng số byte đã nhận)
-		bytesReceived = recv(clientSocket_, buffer, CHUNK_SIZE, 0);
+		//https://en.cppreference.com/w/cpp/string/basic_string/stoul
+		// Dùng 2 biến này để biết khi nào ghi lại hết nội dung file
+		unsigned long long fileSizeNum = stoull(fileSize);
+		unsigned long long totalBytesReceived = 0;
 
-		if (bytesReceived == 0)
+		//https://stackoverflow.com/questions/19017651/how-to-send-files-in-chunk-using-socket-c-c
+
+		char buffer[CHUNK_SIZE];	//biến để nhận các chunk của file, sau đó dùng để ghi lại nội dung file
+		int bytesReceived{};
+
+		// Kiểm tra thư mục tmp có tồn tại hay không
+		// Cần thư mục tmp để chưa file tạm, quét xong thì xóa bỏ (tránh xóa nhầm file code nếu trùng tên)
+		//https://www.geeksforgeeks.org/cpp/how-to-check-a-file-or-directory-exists-in-cpp/
+		const char* dir = "clamavtmp";
+
+		struct stat sb;
+
+		// Calls the function with path as argument
+		// If the file/directory exists at the path returns 0
+		// Nếu thư mục tmp không tồn tại thì tạo thư mục tmp
+		if (stat(dir, &sb) != 0)
 		{
-			printf("Connection closing...\n");
-			break;
-		}
-		else if (bytesReceived < 0) { // < 0: fail
-			printf("recv failed: %d\n", WSAGetLastError());
-			fout.close();
+			//cout << "The Path is invalid!\n";
+			string mkdirCommand = "cmd /C \"mkdir " + string(dir) + "\"";
 
-			return;
+			system(mkdirCommand.c_str());
 		}
 
-		// > 0: receive success
-		//printf("Bytes received: %d\n", bytesReceived);
+		// Đổi tên file sang tmp\fileName
+		fileName = string(dir) + "\\" + fileName;
 
-		fout.write(buffer, bytesReceived);
+		ofstream fout;
+		fout.open(fileName, ios::binary | ios::trunc);	// trunc để mở cái file là xóa hết nội dung ở trong
 
-		totalBytesReceived += bytesReceived;
-	} 	
+
+		std::cout << "Receiving file...\n";
+		// bytesReceived == 0: shutdown
+		//				< 0: fail
+		// Recv until reach fileSize
+		while (totalBytesReceived < fileSizeNum)
+		{
+			// Không cần chừa chỗ cho \0 vì dùng write (ghi lại đúng số byte đã nhận)
+			bytesReceived = recv(clientSocket_, buffer, CHUNK_SIZE, 0);
+
+			if (bytesReceived == 0)
+			{
+				printf("Connection closing...\n");
+				break;
+			}
+			else if (bytesReceived < 0) { // < 0: fail
+				printf("recv failed: %d\n", WSAGetLastError());
+				fout.close();
+
+				return;
+			}
+
+			// > 0: receive success
+			//printf("Bytes received: %d\n", bytesReceived);
+
+			fout.write(buffer, bytesReceived);
+
+			totalBytesReceived += bytesReceived;
+		} 	
 	
-	fout.close();
+		fout.close();
 
-	std::cout << "Received: " << totalBytesReceived << "/" << fileSizeNum << " bytes\n";
+		std::cout << "Received: " << totalBytesReceived << "/" << fileSizeNum << " bytes\n";
 
 
-	// RUN clamscan <file>
-	//https://linux.die.net/man/1/clamscan#:~:text=Return%20Codes,Some%20error(s)%20occured.
-	// clamscan return value:
-	// 0 : No virus found. 1 : Virus(es) found. 2 : Some error(s) occured.
+		// RUN clamscan <file>
+		//https://linux.die.net/man/1/clamscan#:~:text=Return%20Codes,Some%20error(s)%20occured.
+		// clamscan return value:
+		// 0 : No virus found. 1 : Virus(es) found. 2 : Some error(s) occured.
 
-	std::cout << "Running clamscan\n";
-	string clamscanCommand = "cmd /C \"\"" + clamscanSource + "\" \"" + fileName + "\"\"";
+		std::cout << "Running clamscan\n";
+		string clamscanCommand = "cmd /C \"\"" + clamscanSource + "\" \"" + fileName + "\"\"";
 	
-	msg = "Scanning result: ";
-	sendCommandMessage(clientSocket_, msg.c_str());
+		msg = "Scanning result: ";
+		sendCommandMessage(clientSocket_, msg.c_str());
 
-	int scanResult = system(clamscanCommand.c_str());
-	sendCommandMessage(clientSocket_, to_string(scanResult).c_str());
+		int scanResult = system(clamscanCommand.c_str());
+		sendCommandMessage(clientSocket_, to_string(scanResult).c_str());
 
 	
-	//tái sử dụng biến, nhưng dùng nó để xóa cái file đi (sau khi quét xong)
-	clamscanCommand = string("cmd /C \"del ") + "\"" + fileName + "\"\"";
-	system(clamscanCommand.c_str());
+		//tái sử dụng biến, nhưng dùng nó để xóa cái file đi (sau khi quét xong)
+		clamscanCommand = string("cmd /C \"del ") + "\"" + fileName + "\"\"";
+		system(clamscanCommand.c_str());
 
-	cout << "\nScanning done!\n\n";
-	cout << "Waiting for file...\n";
+		std::cout << "\nScanning done!\n\n";
+		std::cout << "Waiting for file...\n";
+	}
+	else // Ascii ("A")
+	{
+		// Receive filename filesize and send response message
+		string fileName = getResponseMessage(clientSocket_);
+		string msg = "\"" + fileName + "\"";
+		sendCommandMessage(clientSocket_, msg.c_str());
+
+
+		//https://stackoverflow.com/questions/19017651/how-to-send-files-in-chunk-using-socket-c-c
+
+		char buffer[CHUNK_SIZE];	//biến để nhận các chunk của file, sau đó dùng để ghi lại nội dung file
+		int bytesReceived{};
+
+		// Kiểm tra thư mục tmp có tồn tại hay không
+		// Cần thư mục tmp để chưa file tạm, quét xong thì xóa bỏ (tránh xóa nhầm file code nếu trùng tên)
+		//https://www.geeksforgeeks.org/cpp/how-to-check-a-file-or-directory-exists-in-cpp/
+		const char* dir = "clamavtmp";
+
+		struct stat sb;
+
+		// Calls the function with path as argument
+		// If the file/directory exists at the path returns 0
+		// Nếu thư mục tmp không tồn tại thì tạo thư mục tmp
+		if (stat(dir, &sb) != 0)
+		{
+			//cout << "The Path is invalid!\n";
+			string mkdirCommand = "cmd /C \"mkdir " + string(dir) + "\"";
+
+			system(mkdirCommand.c_str());
+		}
+
+		// Đổi tên file sang tmp\fileName
+		fileName = string(dir) + "\\" + fileName;
+
+		ofstream fout;
+		fout.open(fileName, ios::trunc);	// trunc để mở cái file là xóa hết nội dung ở trong
+
+
+		std::cout << "Receiving file...\n";
+		// bytesReceived == 0: shutdown
+		//				< 0: fail
+		// Recv until reach fileSize
+		while ((bytesReceived = recv(clientSocket_, buffer, CHUNK_SIZE - 1, 0)) > 0)
+		{
+			// Không cần chừa chỗ cho \0 vì dùng write (ghi lại đúng số byte đã nhận)
+			buffer[bytesReceived] = '\0';
+
+			if (bytesReceived == 0)
+			{
+				printf("Connection closing...\n");
+				break;
+			}
+			else if (bytesReceived < 0) { // < 0: fail
+				printf("recv failed: %d\n", WSAGetLastError());
+				fout.close();
+
+				return;
+			}
+
+			fout << buffer;
+		}
+
+		fout.close();
+
+		std::cout << "Received: " << " bytes\n";
+
+
+		// RUN clamscan <file>
+		//https://linux.die.net/man/1/clamscan#:~:text=Return%20Codes,Some%20error(s)%20occured.
+		// clamscan return value:
+		// 0 : No virus found. 1 : Virus(es) found. 2 : Some error(s) occured.
+
+		std::cout << "Running clamscan\n";
+		string clamscanCommand = "cmd /C \"\"" + clamscanSource + "\" \"" + fileName + "\"\"";
+
+		msg = "Scanning result: ";
+		sendCommandMessage(clientSocket_, msg.c_str());
+
+		int scanResult = system(clamscanCommand.c_str());
+		sendCommandMessage(clientSocket_, to_string(scanResult).c_str());
+
+
+		//tái sử dụng biến, nhưng dùng nó để xóa cái file đi (sau khi quét xong)
+		clamscanCommand = string("cmd /C \"del ") + "\"" + fileName + "\"\"";
+		system(clamscanCommand.c_str());
+
+		std::cout << "\nScanning done!\n\n";
+		std::cout << "Waiting for file...\n";
+	}
 }
 
-void SocketServer::scanASCII()
-{
-	// Receive filename filesize and send response message
-	string fileName = getResponseMessage(clientSocket_);
-	string msg = "\"" + fileName + "\"";
-	sendCommandMessage(clientSocket_, msg.c_str());
-
-
-	//https://stackoverflow.com/questions/19017651/how-to-send-files-in-chunk-using-socket-c-c
-
-	char buffer[CHUNK_SIZE];	//biến để nhận các chunk của file, sau đó dùng để ghi lại nội dung file
-	int bytesReceived{};
-
-	// Kiểm tra thư mục tmp có tồn tại hay không
-	// Cần thư mục tmp để chưa file tạm, quét xong thì xóa bỏ (tránh xóa nhầm file code nếu trùng tên)
-	//https://www.geeksforgeeks.org/cpp/how-to-check-a-file-or-directory-exists-in-cpp/
-	const char* dir = "clamavtmp";
-
-	struct stat sb;
-
-	// Calls the function with path as argument
-	// If the file/directory exists at the path returns 0
-	// Nếu thư mục tmp không tồn tại thì tạo thư mục tmp
-	if (stat(dir, &sb) != 0)
-	{
-		//cout << "The Path is invalid!\n";
-		string mkdirCommand = "cmd /C \"mkdir " + string(dir) + "\"";
-
-		system(mkdirCommand.c_str());
-	}
-
-	// Đổi tên file sang tmp\fileName
-	fileName = string(dir) + "\\" + fileName;
-
-	ofstream fout;
-	fout.open(fileName, ios::trunc);	// trunc để mở cái file là xóa hết nội dung ở trong
-
-
-	std::cout << "Receiving file...\n";
-	// bytesReceived == 0: shutdown
-	//				< 0: fail
-	// Recv until reach fileSize
-	while ((bytesReceived = recv(clientSocket_, buffer, CHUNK_SIZE - 1, 0)) > 0)
-	{
-		// Không cần chừa chỗ cho \0 vì dùng write (ghi lại đúng số byte đã nhận)
-		buffer[bytesReceived] = '\0';
-
-		if (bytesReceived == 0)
-		{
-			printf("Connection closing...\n");
-			break;
-		}
-		else if (bytesReceived < 0) { // < 0: fail
-			printf("recv failed: %d\n", WSAGetLastError());
-			fout.close();
-
-			return;
-		}
-
-		fout << buffer;
-	}
-
-	fout.close();
-
-	std::cout << "Received: " << " bytes\n";
-
-
-	// RUN clamscan <file>
-	//https://linux.die.net/man/1/clamscan#:~:text=Return%20Codes,Some%20error(s)%20occured.
-	// clamscan return value:
-	// 0 : No virus found. 1 : Virus(es) found. 2 : Some error(s) occured.
-
-	std::cout << "Running clamscan\n";
-	string clamscanCommand = "cmd /C \"\"" + clamscanSource + "\" \"" + fileName + "\"\"";
-
-	msg = "Scanning result: ";
-	sendCommandMessage(clientSocket_, msg.c_str());
-
-	int scanResult = system(clamscanCommand.c_str());
-	sendCommandMessage(clientSocket_, to_string(scanResult).c_str());
-
-
-	//tái sử dụng biến, nhưng dùng nó để xóa cái file đi (sau khi quét xong)
-	clamscanCommand = string("cmd /C \"del ") + "\"" + fileName + "\"\"";
-	system(clamscanCommand.c_str());
-
-	std::cout << "\nScanning done!\n\n";
-	std::cout << "Waiting for file...\n";
-}
+//void SocketServer::scanASCII()
+//{
+//	// Receive filename filesize and send response message
+//	string fileName = getResponseMessage(clientSocket_);
+//	string msg = "\"" + fileName + "\"";
+//	sendCommandMessage(clientSocket_, msg.c_str());
+//
+//
+//	//https://stackoverflow.com/questions/19017651/how-to-send-files-in-chunk-using-socket-c-c
+//
+//	char buffer[CHUNK_SIZE];	//biến để nhận các chunk của file, sau đó dùng để ghi lại nội dung file
+//	int bytesReceived{};
+//
+//	// Kiểm tra thư mục tmp có tồn tại hay không
+//	// Cần thư mục tmp để chưa file tạm, quét xong thì xóa bỏ (tránh xóa nhầm file code nếu trùng tên)
+//	//https://www.geeksforgeeks.org/cpp/how-to-check-a-file-or-directory-exists-in-cpp/
+//	const char* dir = "clamavtmp";
+//
+//	struct stat sb;
+//
+//	// Calls the function with path as argument
+//	// If the file/directory exists at the path returns 0
+//	// Nếu thư mục tmp không tồn tại thì tạo thư mục tmp
+//	if (stat(dir, &sb) != 0)
+//	{
+//		//cout << "The Path is invalid!\n";
+//		string mkdirCommand = "cmd /C \"mkdir " + string(dir) + "\"";
+//
+//		system(mkdirCommand.c_str());
+//	}
+//
+//	// Đổi tên file sang tmp\fileName
+//	fileName = string(dir) + "\\" + fileName;
+//
+//	ofstream fout;
+//	fout.open(fileName, ios::trunc);	// trunc để mở cái file là xóa hết nội dung ở trong
+//
+//
+//	std::cout << "Receiving file...\n";
+//	// bytesReceived == 0: shutdown
+//	//				< 0: fail
+//	// Recv until reach fileSize
+//	while ((bytesReceived = recv(clientSocket_, buffer, CHUNK_SIZE - 1, 0)) > 0)
+//	{
+//		// Không cần chừa chỗ cho \0 vì dùng write (ghi lại đúng số byte đã nhận)
+//		buffer[bytesReceived] = '\0';
+//
+//		if (bytesReceived == 0)
+//		{
+//			printf("Connection closing...\n");
+//			break;
+//		}
+//		else if (bytesReceived < 0) { // < 0: fail
+//			printf("recv failed: %d\n", WSAGetLastError());
+//			fout.close();
+//
+//			return;
+//		}
+//
+//		fout << buffer;
+//	}
+//
+//	fout.close();
+//
+//	std::cout << "Received: " << " bytes\n";
+//
+//
+//	// RUN clamscan <file>
+//	//https://linux.die.net/man/1/clamscan#:~:text=Return%20Codes,Some%20error(s)%20occured.
+//	// clamscan return value:
+//	// 0 : No virus found. 1 : Virus(es) found. 2 : Some error(s) occured.
+//
+//	std::cout << "Running clamscan\n";
+//	string clamscanCommand = "cmd /C \"\"" + clamscanSource + "\" \"" + fileName + "\"\"";
+//
+//	msg = "Scanning result: ";
+//	sendCommandMessage(clientSocket_, msg.c_str());
+//
+//	int scanResult = system(clamscanCommand.c_str());
+//	sendCommandMessage(clientSocket_, to_string(scanResult).c_str());
+//
+//
+//	//tái sử dụng biến, nhưng dùng nó để xóa cái file đi (sau khi quét xong)
+//	clamscanCommand = string("cmd /C \"del ") + "\"" + fileName + "\"\"";
+//	system(clamscanCommand.c_str());
+//
+//	std::cout << "\nScanning done!\n\n";
+//	std::cout << "Waiting for file...\n";
+//}
 
 

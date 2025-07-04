@@ -52,7 +52,7 @@ public:
 
 
 	void scan();
-	void scanASCII();
+	//void scanASCII();
 
 };
 
