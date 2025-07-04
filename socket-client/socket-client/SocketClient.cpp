@@ -401,8 +401,8 @@ bool SocketClient::processCommand()
 		if (passiveMode == true) std::cout << "Mode: Passive;\n";
 		else std::cout << "Mode: Active;\n";
 		
-		if (promptMode == true) std::cout << "Prompting: On;\n";
-		else std::cout << "Prompting: Off;";
+		if (promptMode == true) std::cout << "Prompting: On.\n";
+		else std::cout << "Prompting: Off.\n";
 
 		return true;
 	}
@@ -605,7 +605,17 @@ bool SocketClient::processCommand()
 		}
 		if (command.size() < 2) return false;
 
+		char prevType = type;
+
 		for (size_t i = 1; i < command.size(); ++i) {
+			if (promptMode) {
+				std::cout << "Get \"" << command[i] << "\"? (Press 'y' to upload)";
+				string res;
+				std::getline(cin, res);
+				if (res != "y" && res != "Y") continue;
+			}
+
+
 			do
 			{
 				std::cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
@@ -616,7 +626,9 @@ bool SocketClient::processCommand()
 					inputMode == "ascii" || inputMode == "ASCII")
 				{
 					// run ascii command
-
+					type = 'A';
+					sendCommandMessage("TYPE A\r\n");
+					cout << getResponseMessage();
 
 					break;
 				}
@@ -624,22 +636,21 @@ bool SocketClient::processCommand()
 					inputMode == "binary" || inputMode == "BINARY")
 				{
 					// run binary command
-
+					type = 'I';
+					sendCommandMessage("TYPE I\r\n");
+					cout << getResponseMessage();
 					break;
 				}
 
 				std::cout << "Invalid mode!\n";
 			} while (true);
 
-			if (promptMode) {
-				std::cout << "Get \"" << command[i] << "\"? ";
-				string res;
-				std::getline(cin, res);
-				if (res != "y" && res != "Y") continue;
-			}
 			get1File(command[i]);
 			std::cout << "\n";
 		}
+
+		type = prevType;
+
 		return true;
 	}
 	
@@ -661,6 +672,8 @@ bool SocketClient::processCommand()
 			return false;
 		}
 
+		char prevType = type;
+
 		do
 		{
 			std::cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
@@ -671,7 +684,9 @@ bool SocketClient::processCommand()
 				inputMode == "ascii" || inputMode == "ASCII")
 			{
 				// run ascii command
-
+				type = 'A';
+				sendCommandMessage("TYPE A\r\n");
+				cout << getResponseMessage();
 
 				break;
 			}
@@ -679,6 +694,10 @@ bool SocketClient::processCommand()
 				inputMode == "binary" || inputMode == "BINARY")
 			{
 				// run binary command
+				type = 'I';
+
+				sendCommandMessage("TYPE I\r\n");
+				cout << getResponseMessage();
 
 				break;
 			}
@@ -701,6 +720,8 @@ bool SocketClient::processCommand()
 			put1File(command[1]);
 		}
 
+		type = prevType;
+
 		return true;
 	}
 	else if (command[0] == "mput") 
@@ -718,8 +739,17 @@ bool SocketClient::processCommand()
 			return false;
 		}
 
+		char prevType = type;
+
 		// upload files
 		for (size_t i = 1; i < n; ++i) {
+			if (promptMode) {
+				std::cout << "Upload: \"" << command[i] << "\"? (Press 'y' to upload)";
+				string res;
+				std::getline(cin, res);
+				if (res != "y" && res != "Y") continue;
+			}
+
 			do
 			{
 				std::cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
@@ -730,7 +760,9 @@ bool SocketClient::processCommand()
 					inputMode == "ascii" || inputMode == "ASCII")
 				{
 					// run ascii command
-
+					type = 'A';
+					sendCommandMessage("TYPE A\r\n");
+					cout << getResponseMessage();
 
 					break;
 				}
@@ -738,79 +770,45 @@ bool SocketClient::processCommand()
 					inputMode == "binary" || inputMode == "BINARY")
 				{
 					// run binary command
-
+					type = 'I';
+					sendCommandMessage("TYPE I\r\n");
+					cout << getResponseMessage();
 					break;
 				}
 
 				std::cout << "Invalid mode!\n";
 			} while (true);
 
-			if (promptMode) {
-				std::cout << "Upload: \"" << command[i] << "\"? ";
-				string res;
-				std::getline(cin, res);
-				if (res != "y" && res != "Y") continue;
+			if (type == 'A') // ascii
+			{
+				put1FileASCII(command[1]);
+
 			}
-			put1File(command[i]);
+			else // binary
+			{
+				put1File(command[1]);
+			}
+
 			std::cout << "\n";
 		}
+
+		type = prevType;
 
 		return true;
 	}
-	else if (command[0] == "mput")
+
+	else if (command[0] == "ascii")
 	{
-		// mput <filePath> <filePath> <filePath> <filePath> <filePath>
-		// 
-		if (isConnected == false)
-		{
-			std::cout << "Not connected.\n";
-			return true;
-		}
-		unsigned long long n = command.size();
-		if (n < 2)
-		{
-			return false;
-		}
-
-		// upload files
-		for (size_t i = 1; i < n; ++i) {
-			do
-			{
-				std::cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
-
-				string inputMode;
-				std::getline(cin, inputMode);
-				if (inputMode == "A" || inputMode == "a" ||
-					inputMode == "ascii" || inputMode == "ASCII")
-				{
-					// run ascii command
-
-
-					break;
-				}
-				else if (inputMode == "I" || inputMode == "i" ||
-					inputMode == "binary" || inputMode == "BINARY")
-				{
-					// run binary command
-
-					break;
-				}
-
-				std::cout << "Invalid mode!\n";
-			} while (true);
-
-			if (promptMode) {
-				std::cout << "Upload: \"" << command[i] << "\"? ";
-				string res;
-				std::getline(cin, res);
-				if (res != "y" && res != "Y") continue;
-			}
-			put1File(command[i]);
-			std::cout << "\n";
-		}
-
-		return true;
-		}
+		type = 'A';
+		sendCommandMessage("TYPE A\r\n");
+		cout << getResponseMessage();
+	}
+	else if (command[0] == "binary")
+	{
+		type = 'I';
+		sendCommandMessage("TYPE I\r\n");
+		cout << getResponseMessage();
+	}
 
 	else if (command[0] == "help" || command[0] == "?")
 	{
@@ -1360,7 +1358,7 @@ void SocketClient::put1FileASCII(const string& filePath) // "D:\Folder A\fileA.t
 	// 
 	//  Chuyển tên file
 	sendCommandMessage(clamavSocket, fileName.c_str());
-	std::cout << getResponseMessage(clamavSocket);
+	std::cout << getResponseMessage(clamavSocket) << "\n";
 
 	// ASCII nên chuyển theo dòng
 	string buffer;
@@ -1446,7 +1444,7 @@ void SocketClient::put1FileASCII(const string& filePath) // "D:\Folder A\fileA.t
 		{
 			buffer += "\n";
 
-			send(clamavSocket, buffer.c_str(), buffer.size(), 0);
+			send(dataSocket, buffer.c_str(), buffer.size(), 0);
 		}
 		//dong cai data socket
 		shutdown(dataSocket, SD_BOTH);	// không chuyển nội dung file nữa nên đóng (đóng SD_SEND cũng được)
