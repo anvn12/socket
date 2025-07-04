@@ -494,7 +494,36 @@ bool SocketClient::processCommand()
 	}
 
 	//else if (command[0] == "ascii / binary") {}
-	//else if (command[0] == "passive") {}
+	else if (command[0] == "passive") {
+		if (isConnected == false)
+		{
+			cout << "Not connected.\n";
+			return true;
+		}
+		if (command.size() != 1)
+		{
+			return false;
+		}
+
+		sendCommandMessage("PASV\r\n");
+		string response = getResponseMessage();
+		cout << response;
+		string dataIP, dataPort;
+
+		try {
+			tie(dataIP, dataPort) = parsePASVResponse(response);
+		}
+		catch (const exception& ex) {
+			cerr << ex.what() << "\n";
+			return false;
+		}
+
+		SOCKET dataSocket = createDataConnection(dataIP, dataPort);
+		if (dataSocket == INVALID_SOCKET) {
+			cerr << "Failed to create data connection \n";
+			return true;
+		}
+	}
 
 	// bật/tắt việc hỏi xác nhận từng file khi dùng mget/mput
 	else if (command[0] == "prompt") {
