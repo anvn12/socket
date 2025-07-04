@@ -52,6 +52,7 @@ public:
 
 
 	void scan();
+	void scanASCII();
 
 };
 

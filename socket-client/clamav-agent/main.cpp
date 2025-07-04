@@ -60,7 +60,9 @@ int main() {
 		}
 	
 		// clamscan
-		server.scan();
+
+		server.scanASCII();
+		//server.scan();
 	}
 
 	server.close();

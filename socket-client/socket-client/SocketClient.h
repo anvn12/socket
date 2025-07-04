@@ -53,6 +53,8 @@ private:
 
 
 	void put1File(const string& filePath);
+	void put1FileASCII(const string& filePath);
+
 
 public:
 	SocketClient() {}
