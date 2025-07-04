@@ -437,6 +437,7 @@ bool SocketClient::processCommand()
 		SOCKET dataSocket = INVALID_SOCKET;
 
 		if (passiveMode) {
+			//cho pasv mode
 			dataSocket = establishDataConnection(localIP, localPort);
 			if (dataSocket == INVALID_SOCKET) {
 				cerr << "Failed to create data connection \n";
@@ -444,6 +445,7 @@ bool SocketClient::processCommand()
 			}
 		}
 		else {
+			//cho port mode
 			SOCKET listenSocket = establishDataConnection(localIP, localPort);
 			if (listenSocket == INVALID_SOCKET) {
 				cerr << "Failed to create listening socket \n";
@@ -460,6 +462,11 @@ bool SocketClient::processCommand()
 					cerr << "Failed to accept data connection \n";
 					return true;
 				}
+			}
+			if (passiveMode) {
+				//gui lenh cho pasv
+				sendCommandMessage("NLST\r\n");
+				cout << getResponseMessage();
 			}
 		}
 
@@ -481,10 +488,10 @@ bool SocketClient::processCommand()
 		//SOCKET dataSocket = accept(listenSocket, nullptr, nullptr);
 		//closesocket(listenSocket);
 
-		if (dataSocket == INVALID_SOCKET) {
-			cerr << "Failed to accept data connection";
-			return true;
-		}
+		//if (dataSocket == INVALID_SOCKET) {
+		//	cerr << "Failed to accept data connection";
+		//	return true;
+		//}
 		
 		//doan nay tro xuong k khac gi pasv mode
 		//bat dau doc directory tu data socket
@@ -533,24 +540,10 @@ bool SocketClient::processCommand()
 			return false;
 		}
 
-		sendCommandMessage("PASV\r\n");
-		string response = getResponseMessage();
-		cout << response;
-		string dataIP, dataPort;
-
-		try {
-			tie(dataIP, dataPort) = parsePASVResponse(response);
-		}
-		catch (const exception& ex) {
-			cerr << ex.what() << "\n";
-			return false;
-		}
-
-		SOCKET dataSocket = createDataConnection(dataIP, dataPort);
-		if (dataSocket == INVALID_SOCKET) {
-			cerr << "Failed to create data connection \n";
-			return true;
-		}
+		passiveMode = !passiveMode;
+		cout << "Passive mode " << (passiveMode ? "On" : "Off") << ".\n";
+		return true;
+	
 	}
 
 	// bật/tắt việc hỏi xác nhận từng file khi dùng mget/mput
