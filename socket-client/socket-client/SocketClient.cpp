@@ -380,12 +380,29 @@ bool SocketClient::processCommand()
 
 		if (isConnected) {
 			cout << "Connected to " << serverIP << ".\n";
-			cout << "Type: ascii; Verbose: On ; Bell: Off ; Prompting: On ; Globbing: On\n"; //cái ascii có thể thay đổi lúc làm xong ascii/binary
-			cout << "Debugging: Off ; Hash mark printing: Off .\n";
 		}
 		else {
 			cout << "Not connected.\n";
 		}
+
+		// ON
+		// type: ascii (text) / binary (non-text)
+		// prompting: yes no cho mget mput
+		// mode: active (PORT) / passive (PASV)
+		// 
+		// verbose: hiện mấy cái response message
+		// bell: kêu tiếng khi gửi command
+		// globbing: cho phép *.txt là chọn tất cả file .txt
+		// debugging: hiện mấy cái command gửi đi
+		// hash...: in mấy dấu # trong lúc truyền nhận file
+		if (type == 'A') std::cout << "Type: ASCII; ";
+		else std::cout << "Type: Binary; ";
+
+		if (passiveMode == true) std::cout << "Mode: Passive;\n";
+		else std::cout << "Mode: Active;\n";
+		
+		if (promptMode == true) std::cout << "Prompting: On;\n";
+		else std::cout << "Prompting: Off;";
 
 		return true;
 	}
@@ -404,7 +421,7 @@ bool SocketClient::processCommand()
 		// if not connect
 		if (isConnected == false)
 		{
-			cout << "Not connected.\n";
+			std::cout << "Not connected.\n";
 			return true;
 		}
 		if (command.size() != 1)
@@ -434,7 +451,7 @@ bool SocketClient::processCommand()
 
 			sendCommandMessage("NLST\r\n");
 			//in cai 150 ra truoc
-			cout << getResponseMessage();
+			std::cout << getResponseMessage();
 
 			//accept incoming data connection
 			dataSocket = accept(listenSocket, nullptr, nullptr);
@@ -448,7 +465,7 @@ bool SocketClient::processCommand()
 		if (passiveMode) {
 			//gui lenh cho pasv
 			sendCommandMessage("NLST\r\n");
-			cout << getResponseMessage();
+			std::cout << getResponseMessage();
 		}
 
 		//if (listenSocket == INVALID_SOCKET) {
@@ -458,12 +475,12 @@ bool SocketClient::processCommand()
 
 		//string portCommand = formatPORTCommand(localIP, localPort);
 		//sendCommandMessage(portCommand.c_str());
-		//cout << getResponseMessage();
+		//std::cout << getResponseMessage();
 
 		////gui cai lenh NLST
 		//sendCommandMessage("NLST\r\n");
 		////in cai 150 ra truoc
-		//cout << getResponseMessage();
+		//std::cout << getResponseMessage();
 		////accept incoming data connection
 		//SOCKET dataSocket = accept(listenSocket, nullptr, nullptr);
 		//closesocket(listenSocket);
@@ -500,10 +517,10 @@ bool SocketClient::processCommand()
 		closesocket(dataSocket);
 		//list cai directory ra
 		if (!directoryListing.empty()) {
-			cout << directoryListing << "\n";
+			std::cout << directoryListing << "\n";
 		}
-		//cout << "ftp: " << totalBytes << " bytes received in " << seconds << " seconds " << speed << " Kbytes/sec.\n";
-		cout << getResponseMessage();
+		//std::cout << "ftp: " << totalBytes << " bytes received in " << seconds << " seconds " << speed << " Kbytes/sec.\n";
+		std::cout << getResponseMessage();
 
 		return true;
 	}
@@ -512,7 +529,7 @@ bool SocketClient::processCommand()
 	else if (command[0] == "passive") {
 		if (isConnected == false)
 		{
-			cout << "Not connected.\n";
+			std::cout << "Not connected.\n";
 			return true;
 		}
 		if (command.size() != 1)
@@ -521,7 +538,7 @@ bool SocketClient::processCommand()
 		}
 
 		passiveMode = !passiveMode;
-		cout << "Passive mode " << (passiveMode ? "On" : "Off") << ".\n";
+		std::cout << "Passive mode " << (passiveMode ? "On" : "Off") << ".\n";
 
 		return true;
 	}
@@ -530,14 +547,14 @@ bool SocketClient::processCommand()
 	else if (command[0] == "prompt") {
 		if (command.size() != 1) return false;
 		promptMode = !promptMode;
-		cout << "Interactive prompting " << (promptMode ? "On" : "Off") << ".\n";
+		std::cout << "Interactive prompting " << (promptMode ? "On" : "Off") << ".\n";
 		return true;
 	}
 
 	// tải 1 file từ FTP server về client
 	else if (command[0] == "get" || command[0] == "recv") {
 		if (!isConnected) { 
-			cout << "Not connected.\n"; return true; 
+			std::cout << "Not connected.\n"; return true; 
 		}
 
 		if (command.size() != 2)
@@ -548,7 +565,7 @@ bool SocketClient::processCommand()
 
 		//do
 		//{
-		//	cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
+		//	std::cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
 
 		//	string inputMode;
 		//	getline(cin, inputMode);
@@ -568,7 +585,7 @@ bool SocketClient::processCommand()
 		//		break;
 		//	}
 
-		//	cout << "Invalid mode!\n";
+		//	std::cout << "Invalid mode!\n";
 		//} while (true);
 
 
@@ -584,14 +601,14 @@ bool SocketClient::processCommand()
 	// tải nhiều file từ FTP server
 	else if (command[0] == "mget") {
 		if (!isConnected) { 
-			cout << "Not connected.\n"; return true; 
+			std::cout << "Not connected.\n"; return true; 
 		}
 		if (command.size() < 2) return false;
 
 		for (size_t i = 1; i < command.size(); ++i) {
 			do
 			{
-				cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
+				std::cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
 
 				string inputMode;
 				getline(cin, inputMode);
@@ -611,17 +628,17 @@ bool SocketClient::processCommand()
 					break;
 				}
 
-				cout << "Invalid mode!\n";
+				std::cout << "Invalid mode!\n";
 			} while (true);
 
 			if (promptMode) {
-				cout << "Get \"" << command[i] << "\"? ";
+				std::cout << "Get \"" << command[i] << "\"? ";
 				string res;
 				getline(cin, res);
 				if (res != "y" && res != "Y") continue;
 			}
 			get1File(command[i]);
-			cout << "\n";
+			std::cout << "\n";
 		}
 		return true;
 	}
@@ -636,7 +653,7 @@ bool SocketClient::processCommand()
 		// if not connect
 		if (isConnected == false)
 		{
-			cout << "Not connected.\n";
+			std::cout << "Not connected.\n";
 			return true;
 		}
 		if (command.size() != 2)
@@ -646,7 +663,7 @@ bool SocketClient::processCommand()
 
 		do
 		{
-			cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
+			std::cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
 
 			string inputMode;
 			getline(cin, inputMode);
@@ -666,13 +683,13 @@ bool SocketClient::processCommand()
 				break;
 			}
 
-			cout << "Invalid mode!\n";
+			std::cout << "Invalid mode!\n";
 		} while (true);
 
 		
 
 		// Chuyển file đi
-		cout << "Upload: \"" << command[1] << "\"\n";
+		std::cout << "Upload: \"" << command[1] << "\"\n";
 
 		if (type == 'A') // ascii
 		{
@@ -692,7 +709,7 @@ bool SocketClient::processCommand()
 		// 
 		if (isConnected == false)
 		{
-			cout << "Not connected.\n";
+			std::cout << "Not connected.\n";
 			return true;
 		}
 		unsigned long long n = command.size();
@@ -705,7 +722,7 @@ bool SocketClient::processCommand()
 		for (size_t i = 1; i < n; ++i) {
 			do
 			{
-				cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
+				std::cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
 
 				string inputMode;
 				getline(cin, inputMode);
@@ -725,17 +742,17 @@ bool SocketClient::processCommand()
 					break;
 				}
 
-				cout << "Invalid mode!\n";
+				std::cout << "Invalid mode!\n";
 			} while (true);
 
 			if (promptMode) {
-				cout << "Upload: \"" << command[i] << "\"? ";
+				std::cout << "Upload: \"" << command[i] << "\"? ";
 				string res;
 				getline(cin, res);
 				if (res != "y" && res != "Y") continue;
 			}
 			put1File(command[i]);
-			cout << "\n";
+			std::cout << "\n";
 		}
 
 		return true;
