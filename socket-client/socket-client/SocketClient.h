@@ -21,6 +21,7 @@ private:
 
 	bool isConnected = false;
 	bool isQuit = false;
+	bool passiveMode = false; //mac dinh la port mode
 	bool promptMode = true; // hỏi xác nhận khi dùng mget
 	vector<string> command;		// store command and arguments
 	string serverIP;
@@ -48,6 +49,7 @@ private:
 	SOCKET createListeningSocket(string& localIP, int& localPort);
 	string formatPORTCommand(const string& ip, int port);
 
+	SOCKET establishDataConnection(string& localIP, int& localPort);
 
 	string getResponseMessage();
 	string getResponseMessage(SOCKET& s);

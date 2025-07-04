@@ -412,51 +412,66 @@ bool SocketClient::processCommand()
 			return false;
 		}
 
-		////1. gui PASV de vao passive mode
-		//sendCommandMessage("PASV\r\n");
-		//string response = getResponseMessage();
-		//cout << response;
-		//string dataIP, dataPort;
+		string localIP;
+		int localPort;
+		SOCKET dataSocket = INVALID_SOCKET;
 
-		//try {
-		//	tie(dataIP, dataPort) = parsePASVResponse(response);
-		//}
-		//catch (const exception& ex) {
-		//	cerr << ex.what() << "\n";
-		//	return false;
-		//}
+		if (passiveMode) {
+			//cho pasv mode
+			dataSocket = establishDataConnection(localIP, localPort);
+			if (dataSocket == INVALID_SOCKET) {
+				cerr << "Failed to create data connection \n";
+				return true;
+			}
+		}
+		else {
+			//cho port mode
+			SOCKET listenSocket = establishDataConnection(localIP, localPort);
+			if (listenSocket == INVALID_SOCKET) {
+				cerr << "Failed to create listening socket \n";
+				return true;
+			}
 
-		//SOCKET dataSocket = createDataConnection(dataIP, dataPort);
-		//if (dataSocket == INVALID_SOCKET) {
-		//	cerr << "Failed to create data connection \n";
+			sendCommandMessage("NLST\r\n");
+			//in cai 150 ra truoc
+			cout << getResponseMessage();
+
+			//accept incoming data connection
+			dataSocket = accept(listenSocket, nullptr, nullptr);
+			closesocket(listenSocket);
+
+			if (dataSocket == INVALID_SOCKET) {
+				cerr << "Failed to accept data connection \n";
+				return true;
+			}
+		}
+		if (passiveMode) {
+			//gui lenh cho pasv
+			sendCommandMessage("NLST\r\n");
+			cout << getResponseMessage();
+		}
+
+		//if (listenSocket == INVALID_SOCKET) {
+		//	cerr << "Failed to create listening socket for PORT mode";
 		//	return true;
 		//}
 
-		string localIP;
-		int localPort;
-		SOCKET listenSocket = createListeningSocket(localIP, localPort);
-		if (listenSocket == INVALID_SOCKET) {
-			cerr << "Failed to create listening socket for PORT mode";
-			return true;
-		}
+		//string portCommand = formatPORTCommand(localIP, localPort);
+		//sendCommandMessage(portCommand.c_str());
+		//cout << getResponseMessage();
 
-		string portCommand = formatPORTCommand(localIP, localPort);
-		sendCommandMessage(portCommand.c_str());
-		cout << getResponseMessage();
+		////gui cai lenh NLST
+		//sendCommandMessage("NLST\r\n");
+		////in cai 150 ra truoc
+		//cout << getResponseMessage();
+		////accept incoming data connection
+		//SOCKET dataSocket = accept(listenSocket, nullptr, nullptr);
+		//closesocket(listenSocket);
 
-		//gui cai lenh NLST
-		sendCommandMessage("NLST\r\n");
-
-		//in cai 150 ra truoc
-		cout << getResponseMessage();
-		//accept incoming data connection
-		SOCKET dataSocket = accept(listenSocket, nullptr, nullptr);
-		closesocket(listenSocket);
-
-		if (dataSocket == INVALID_SOCKET) {
-			cerr << "Failed to accept data connection";
-			return true;
-		}
+		//if (dataSocket == INVALID_SOCKET) {
+		//	cerr << "Failed to accept data connection";
+		//	return true;
+		//}
 		
 		//doan nay tro xuong k khac gi pasv mode
 		//bat dau doc directory tu data socket
@@ -494,7 +509,22 @@ bool SocketClient::processCommand()
 	}
 
 	//else if (command[0] == "ascii / binary") {}
-	//else if (command[0] == "passive") {}
+	else if (command[0] == "passive") {
+		if (isConnected == false)
+		{
+			cout << "Not connected.\n";
+			return true;
+		}
+		if (command.size() != 1)
+		{
+			return false;
+		}
+
+		passiveMode = !passiveMode;
+		cout << "Passive mode " << (passiveMode ? "On" : "Off") << ".\n";
+		return true;
+	
+	}
 
 	// bật/tắt việc hỏi xác nhận từng file khi dùng mget/mput
 	else if (command[0] == "prompt") {
@@ -988,6 +1018,42 @@ SOCKET SocketClient::createListeningSocket(string& localIP, int& localPort) {
 
 	return listenSocket;
 }
+
+
+//ham de tao ket data connection cho pasv hoac port
+SOCKET SocketClient::establishDataConnection(string& localIP, int& localPort) {
+	//passive mode
+	if (passiveMode) {
+		sendCommandMessage("PASV\r\n");
+		string response = getResponseMessage();
+		cout << response;
+
+		string dataIP, dataPort;
+		try {
+			tie(dataIP, dataPort) = parsePASVResponse(response);
+			return createDataConnection(dataIP, dataPort);
+		} 
+		catch (const exception& ex) {
+			cerr << "PASV error: " << ex.what() << "\n";
+			return INVALID_SOCKET;
+		}
+	}
+
+	//port mode
+	else {
+		SOCKET listenSocket = createListeningSocket(localIP, localPort);
+		if (listenSocket == INVALID_SOCKET) {
+			return INVALID_SOCKET;
+		}
+
+		string portCommand = formatPORTCommand(localIP, localPort);
+		sendCommandMessage(portCommand.c_str());
+		cout << getResponseMessage();
+
+		return listenSocket;
+	}
+}
+
 
 //PORT h1,h2,h3,h4,p1,p2
 string SocketClient::formatPORTCommand(const string& ip, int port) {
