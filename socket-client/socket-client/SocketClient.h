@@ -31,6 +31,8 @@ private:
 	const char* clamavPort = "55555";
 
 
+	char type = 'A';	// ascii (A), binary (I)
+
 	//bool connectToServer(addrinfo* result);
 
 	//cai nay la de tao client active connection, co tac dung khoi tao CONTROL connection hoac PASV DATA connection
@@ -55,6 +57,8 @@ private:
 
 	void get1File(const string& filename);
 	void put1File(const string& filePath);
+	void put1FileASCII(const string& filePath);
+
 
 public:
 	SocketClient() {}
