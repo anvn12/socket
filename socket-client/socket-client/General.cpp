@@ -117,26 +117,26 @@ pair<string, string> parsePASVResponse(const string& response) {
 }
 
 
-//promtMsg la cai ma muon in ra vd Folder name: dir name:, ...
-string getArgOrPrompt(const vector<string>& command, size_t startIndex, const string& promptMsg) {
-	string name;
-	if (command.size() <= startIndex) {
-		cout << promptMsg;
-		getline(cin, name);
-		if (name.empty()) {
-			return "";
-		}
-	}
-	//ghep tu cai startIndex vao
-	else {
-		name = command[startIndex];
-		for (size_t i = startIndex + 1; i < command.size(); ++i) {
-			name += " " + command[i];
-		}
-	}
-	//xoa may cai dau ""
-	if (name.size() > 1 && name.front() == '"' && name.back() == '"') {
-		name = name.substr(1, name.size() - 2);
-	}
-	return name;
-}
+////promtMsg la cai ma muon in ra vd Folder name: dir name:, ...
+//string getArgOrPrompt(const vector<string>& command, size_t startIndex, const string& promptMsg) {
+//	string name;
+//	if (command.size() <= startIndex) {
+//		cout << promptMsg;
+//		getline(cin, name);
+//		if (name.empty()) {
+//			return "";
+//		}
+//	}
+//	//ghep tu cai startIndex vao
+//	else {
+//		name = command[startIndex];
+//		for (size_t i = startIndex + 1; i < command.size(); ++i) {
+//			name += " " + command[i];
+//		}
+//	}
+//	//xoa may cai dau ""
+//	if (name.size() > 1 && name.front() == '"' && name.back() == '"') {
+//		name = name.substr(1, name.size() - 2);
+//	}
+//	return name;
+//}

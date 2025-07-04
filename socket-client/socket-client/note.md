@@ -20,3 +20,8 @@ Nó sổ ra một đống thứ, làm lại mấy đấy
 26/06
 https://learn.microsoft.com/en-us/windows/win32/winsock/
 https://stackoverflow.com/questions/63542867/how-to-connect-to-a-local-host-using-winsock2
+
+
+
+hàm status in ra mấy thứ mkhoong cần?
+chuyển get mget: tải vô 1 thư mục nào đó (kiểu clientData...) tránh trùng tên rồi xung đột
