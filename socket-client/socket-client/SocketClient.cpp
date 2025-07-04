@@ -522,6 +522,10 @@ bool SocketClient::processCommand()
 
 		passiveMode = !passiveMode;
 		cout << "Passive mode " << (passiveMode ? "On" : "Off") << ".\n";
+
+		sendCommandMessage("PASV\r\n");
+		cout << getResponseMessage();
+
 		return true;
 	
 	}
