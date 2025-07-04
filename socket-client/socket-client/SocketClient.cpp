@@ -412,26 +412,6 @@ bool SocketClient::processCommand()
 			return false;
 		}
 
-		////1. gui PASV de vao passive mode
-		//sendCommandMessage("PASV\r\n");
-		//string response = getResponseMessage();
-		//cout << response;
-		//string dataIP, dataPort;
-
-		//try {
-		//	tie(dataIP, dataPort) = parsePASVResponse(response);
-		//}
-		//catch (const exception& ex) {
-		//	cerr << ex.what() << "\n";
-		//	return false;
-		//}
-
-		//SOCKET dataSocket = createDataConnection(dataIP, dataPort);
-		//if (dataSocket == INVALID_SOCKET) {
-		//	cerr << "Failed to create data connection \n";
-		//	return true;
-		//}
-
 		string localIP;
 		int localPort;
 		SOCKET dataSocket = INVALID_SOCKET;
@@ -450,26 +430,26 @@ bool SocketClient::processCommand()
 			if (listenSocket == INVALID_SOCKET) {
 				cerr << "Failed to create listening socket \n";
 				return true;
-
-				sendCommandMessage("NLST\r\n");
-				//in cai 150 ra truoc
-				cout << getResponseMessage();
-				//accept incoming data connection
-				dataSocket = accept(listenSocket, nullptr, nullptr);
-				closesocket(listenSocket);
-
-				if (dataSocket == INVALID_SOCKET) {
-					cerr << "Failed to accept data connection \n";
-					return true;
-				}
 			}
-			if (passiveMode) {
-				//gui lenh cho pasv
-				sendCommandMessage("NLST\r\n");
-				cout << getResponseMessage();
+
+			sendCommandMessage("NLST\r\n");
+			//in cai 150 ra truoc
+			cout << getResponseMessage();
+
+			//accept incoming data connection
+			dataSocket = accept(listenSocket, nullptr, nullptr);
+			closesocket(listenSocket);
+
+			if (dataSocket == INVALID_SOCKET) {
+				cerr << "Failed to accept data connection \n";
+				return true;
 			}
 		}
-
+		if (passiveMode) {
+			//gui lenh cho pasv
+			sendCommandMessage("NLST\r\n");
+			cout << getResponseMessage();
+		}
 
 		//if (listenSocket == INVALID_SOCKET) {
 		//	cerr << "Failed to create listening socket for PORT mode";
