@@ -544,6 +544,35 @@ bool SocketClient::processCommand()
 		{
 			return false;
 		}
+
+
+		//do
+		//{
+		//	cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
+
+		//	string inputMode;
+		//	getline(cin, inputMode);
+		//	if (inputMode == "A" || inputMode == "a" ||
+		//		inputMode == "ascii" || inputMode == "ASCII")
+		//	{
+		//		// run ascii command
+
+
+		//		break;
+		//	}
+		//	else if (inputMode == "I" || inputMode == "i" ||
+		//		inputMode == "binary" || inputMode == "BINARY")
+		//	{
+		//		// run binary command
+
+		//		break;
+		//	}
+
+		//	cout << "Invalid mode!\n";
+		//} while (true);
+
+
+
 		string filename = command[1];
 
 		//string filename = getArgOrPrompt(command, 1, "Remote file name: ");
@@ -560,14 +589,38 @@ bool SocketClient::processCommand()
 		if (command.size() < 2) return false;
 
 		for (size_t i = 1; i < command.size(); ++i) {
-			string filename = command[i];
+			do
+			{
+				cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
+
+				string inputMode;
+				getline(cin, inputMode);
+				if (inputMode == "A" || inputMode == "a" ||
+					inputMode == "ascii" || inputMode == "ASCII")
+				{
+					// run ascii command
+
+
+					break;
+				}
+				else if (inputMode == "I" || inputMode == "i" ||
+					inputMode == "binary" || inputMode == "BINARY")
+				{
+					// run binary command
+
+					break;
+				}
+
+				cout << "Invalid mode!\n";
+			} while (true);
+
 			if (promptMode) {
-				cout << "Get " << filename << "? ";
+				cout << "Get \"" << command[i] << "\"? ";
 				string res;
 				getline(cin, res);
 				if (res != "y" && res != "Y") continue;
 			}
-			get1File(filename);
+			get1File(command[i]);
 			cout << "\n";
 		}
 		return true;
@@ -591,177 +644,45 @@ bool SocketClient::processCommand()
 			return false;
 		}
 
+		do
+		{
+			cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
+
+			string inputMode;
+			getline(cin, inputMode);
+			if (inputMode == "A" || inputMode == "a" ||
+				inputMode == "ascii" || inputMode == "ASCII")
+			{
+				// run ascii command
+
+
+				break;
+			}
+			else if (inputMode == "I" || inputMode == "i" ||
+				inputMode == "binary" || inputMode == "BINARY")
+			{
+				// run binary command
+
+				break;
+			}
+
+			cout << "Invalid mode!\n";
+		} while (true);
+
+		
+
 		// Chuyển file đi
-		cout << "Upload: " << command[1] << "\n";
-		//put1File(command[1]);
-		put1FileASCII(command[1]);
+		cout << "Upload: \"" << command[1] << "\"\n";
 
-		////https://cplusplus.com/doc/tutorial/files/
-		////  MỞ file
-		//string filePath = command[1];  // "D:\Folder A\fileA.txt"
-		//ifstream fin;
-		//fin.open(filePath, ios::binary | ios::ate);	//ios::binary   file nhị phân để đọc nội dung -> chuyển nội dung đi
-		//											//ios::ate		mở từ cuối file (để lấy kích thước nhanh hơn)
-		//if (!fin.is_open())
-		//{
-		//	cout << "File not found or cannot open file.\n";
-		//	return true;
-		//}
-		//
-		////  Lấy kích thươc tệp (byte)
-		//uint64_t fileSize = fin.tellg();		//trả về ví trí trong file hiện tại (do mở từ cuối nên sẽ trả về số byte ở cuối, tức là kích thước file)
-	
-		////  Dời tới đầu file để đọc
-		//fin.seekg(0, ios::beg);
+		if (type == 'A') // ascii
+		{
+			put1FileASCII(command[1]);
 
-
-		////filePath: D:\Folder A\fileA.txt
-		////	Get file name
-		//string fileName;
-		//for (int i = filePath.size() - 1; i >= 0; i--)
-		//{
-		//	if (filePath[i] == '\\')
-		//	{
-		//		break;
-		//	}
-		//	fileName.push_back(filePath[i]);
-		//}
-		//reverse(fileName.begin(), fileName.end());
-
-		////	Truyền file qua cho ClamAV Agent để quét
-		////  Tạo socket để truyền, 
-		////ClamAV Agent đặt cùng với FTP server nên cùng IP, port tự đặt
-		//SOCKET clamavSocket = createConnection(serverIP, clamavPort, true);  // true for retry
-		//if (clamavSocket == INVALID_SOCKET) {
-		//	cerr << "Cannot init socket\n";
-		//	isQuit = true;
-		//	return true;
-		//}
-
-
-		////  first message "Scanning: " => kết nối được agent
-		//cout << getResponseMessage(clamavSocket);
-
-		////https://youtu.be/NHrk33uCzL8?si=F2rQr1mvSjYWPuHQ
-		//// 
-		////  Chuyển tên file
-		//sendCommandMessage(clamavSocket, fileName.c_str());
-		//cout << getResponseMessage(clamavSocket);
-
-		////  Chuyển kích thước 
-		//sendCommandMessage(clamavSocket, to_string(fileSize).c_str());
-		//cout << getResponseMessage(clamavSocket);
-
-		////  Chuyển nội dung file theo từng chunk, tránh chuyển đi quá nhiều trong 1 lần
-		//char buffer[CHUNK_SIZE];
-
-		//while (!fin.eof()) 
-		//{
-		//	// Đọc file binary theo từng chunk 
-		//	fin.read(buffer, CHUNK_SIZE);
-
-		//	int bytesRead = fin.gcount();		// số Bytes đọc được
-
-		//	// gửi chunk vừa đọc qua agent
-		//	send(clamavSocket, buffer, bytesRead, 0);
-		//}
-
-		////  Bên agent: tạo file mới, đọc lại nội dung rồi bỏ vào file
-		////Sau đó chạy clamscan file vừa mới tạo. Xong thì xóa file cho đỡ tốn bộ nhớ.
-
-
-		//// in cái dòng "Clamscan result:"
-		//cout << getResponseMessage(clamavSocket);
-
-		////	Lấy kết quả quét
-		//int iResult = stoi(getResponseMessage(clamavSocket));
-
-		//// OK -> chuyển qua server
-		//if (iResult == 0)
-		//{
-		//	cout << "OK\n";
-
-		//	// send file to ftp server
-
-		//	// FTP> put "D:\a a.txt"
-		//	// 
-		//	// command: PORT ...
-		//	// 200 PORT command successful.
-		//	// 
-		//	// command: STOR <file>
-		//	// 150 Starting data transfer.
-		//	// <Gửi nội dung file qua>
-		//	// 226 Operation successful
-		//	// ftp : 5 bytes sent in 0.00Seconds 5.00Kbytes / sec.
-
-
-		//	// Lấy ip, port server (cái mà client đang kết nối vô)
-		//	// Phần này giống trong command "ls"
-		//	string localIP;
-		//	int localPort;
-		//	SOCKET listenSocket = createListeningSocket(localIP, localPort);
-		//	if (listenSocket == INVALID_SOCKET) {
-		//		cerr << "Failed to create listening socket for PORT mode";
-		//		return true;
-		//	}
-
-		//	string portCommand = formatPORTCommand(localIP, localPort);
-		//	sendCommandMessage(portCommand.c_str());
-		//	cout << getResponseMessage();
-
-		//	//gui cai lenh STOR
-		//	string msg = "STOR " + fileName + "\r\n";
-		//	sendCommandMessage(msg.c_str());
-
-		//	//in cai 150 ra truoc (bắt đầu gửi cái nội dung file qua)
-		//	//	150 Starting data transfer.
-		//	cout << getResponseMessage();
-
-		//	//accept incoming data connection
-		//	SOCKET dataSocket = accept(listenSocket, nullptr, nullptr);
-		//	closesocket(listenSocket);
-		//	if (dataSocket == INVALID_SOCKET) {
-		//		cerr << "Failed to accept data connection";
-		//		return true;
-		//	}
-
-		//	//https://stackoverflow.com/questions/5343173/returning-to-beginning-of-file-after-getline
-		//	//  Dời tới đầu file để đọc
-		//	fin.clear();		// do lúc gửi cho agent đã chạm tới eof -> clear
-		//	fin.seekg(0, ios::beg);
-
-
-		//	// Đọc và chuyển nội dung qua server
-		//	while (!fin.eof())
-		//	{
-		//		// Đọc file binary theo từng chunk 
-		//		fin.read(buffer, CHUNK_SIZE);
-
-		//		int bytesRead = fin.gcount();		// số Bytes đọc được
-
-		//		// gửi chunk vừa đọc qua server
-		//		send(dataSocket, buffer, bytesRead, 0);
-		//	}
-
-		//	//dong cai data socket
-		//	closesocket(dataSocket);
-
-		//	// 226 Operation successful
-		//	cout << getResponseMessage();
-		//}
-		//// Nếu có virus (1) hoặc lỗi (2) thì không gửi qua server
-		//else if (iResult == 1)
-		//{
-		//	cout << "WARNING: Clamscan found threats!\n";
-		//}
-		//else
-		//{
-		//	cout << "ERROR: Scan failed!\n";
-		//}
-
-
-		//fin.close();
-		//closesocket(clamavSocket);
+		}
+		else // binary
+		{
+			put1File(command[1]);
+		}
 
 		return true;
 	}
@@ -782,9 +703,33 @@ bool SocketClient::processCommand()
 
 		// upload files
 		for (size_t i = 1; i < n; ++i) {
-			//string filename = command[i];
+			do
+			{
+				cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
+
+				string inputMode;
+				getline(cin, inputMode);
+				if (inputMode == "A" || inputMode == "a" ||
+					inputMode == "ascii" || inputMode == "ASCII")
+				{
+					// run ascii command
+
+
+					break;
+				}
+				else if (inputMode == "I" || inputMode == "i" ||
+					inputMode == "binary" || inputMode == "BINARY")
+				{
+					// run binary command
+
+					break;
+				}
+
+				cout << "Invalid mode!\n";
+			} while (true);
+
 			if (promptMode) {
-				cout << "Upload: " << command[i] << "? ";
+				cout << "Upload: \"" << command[i] << "\"? ";
 				string res;
 				getline(cin, res);
 				if (res != "y" && res != "Y") continue;
@@ -792,14 +737,6 @@ bool SocketClient::processCommand()
 			put1File(command[i]);
 			cout << "\n";
 		}
-	/*	for (int i = 1; i < n; i++)
-		{
-			cout << "Upload: " << command[i] << "\n";
-
-			put1File(command[i]);
-
-			cout << "\n";
-		}*/
 
 		return true;
 	}
