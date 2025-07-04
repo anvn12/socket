@@ -254,11 +254,18 @@ bool SocketClient::processCommand()
 			cout << "Not connected.\n"; 
 			return true; 
 		}
-		string folder = getArgOrPrompt(command, 1, "Remote directory: ");
+		if (command.size() != 2)
+		{
+			return false;
+		}
+
+		string folder = command[1];
+
+		/*string folder = getArgOrPrompt(command, 1, "Remote directory: ");
 		if (folder.empty()) {
 			cout << "No directory was entered.\n";
 			return true;
-		}
+		}*/
 		sendCommandMessage(("CWD " + folder + "\r\n").c_str());
 		cout << getResponseMessage();
 		return true;
@@ -270,11 +277,17 @@ bool SocketClient::processCommand()
 			cout << "Not connected.\n"; 
 			return true; 
 		}
-		string folder = getArgOrPrompt(command, 1, "Folder name: ");
+		if (command.size() != 2)
+		{
+			return false;
+		}
+		string folder = command[1];
+
+		/*string folder = getArgOrPrompt(command, 1, "Folder name: ");
 		if (folder.empty()) {
 			cout << "No folder name was entered.\n";
 			return true;
-		}
+		}*/
 		sendCommandMessage(("XMKD " + folder + "\r\n").c_str());
 		cout << getResponseMessage();
 		return true;
@@ -285,11 +298,16 @@ bool SocketClient::processCommand()
 			cout << "Not connected.\n"; 
 			return true; 
 		}
-		string folder = getArgOrPrompt(command, 1, "Folder name: ");
+		if (command.size() != 2)
+		{
+			return false;
+		}
+		string folder = command[1];
+		/*string folder = getArgOrPrompt(command, 1, "Folder name: ");
 		if (folder.empty()) {
 			cout << "No folder name was entered.\n";
 			return true;
-		}
+		}*/
 		sendCommandMessage(("XRMD " + folder + "\r\n").c_str());
 		cout << getResponseMessage();
 		return true;
@@ -300,11 +318,17 @@ bool SocketClient::processCommand()
 			cout << "Not connected.\n"; 
 			return true; 
 		}
-		string file = getArgOrPrompt(command, 1, "Enter file name: ");
+		if (command.size() != 2)
+		{
+			return false;
+		}
+		string file = command[1];
+
+		/*string file = getArgOrPrompt(command, 1, "Enter file name: ");
 		if (file.empty()) {
 			cout << "No file name was entered.\n";
 			return true;
-		}
+		}*/
 		sendCommandMessage(("DELE " + file + "\r\n").c_str());
 		cout << getResponseMessage();
 		return true;
@@ -317,11 +341,14 @@ bool SocketClient::processCommand()
 			return true;
 		}
 
-		if (command.size() != 1) {
+		if (command.size() != 3) {
 			return false;
 		}
 
-		string originalName, newName;
+		string originalName = command[1];
+		string newName = command[2];
+
+		/*string originalName, newName;
 		cout << "From name: ";
 		getline(cin, originalName);
 		if (originalName.empty()) {
@@ -334,7 +361,7 @@ bool SocketClient::processCommand()
 		if (newName.empty()) {
 			cout << "No new name was entered.\n";
 			return true;
-		}
+		}*/
 
 
 		sendCommandMessage(("RNFR " + originalName + "\r\n").c_str());
@@ -363,27 +390,6 @@ bool SocketClient::processCommand()
 		return true;
 	}
 
-	//else if (command[0] == "help" || command[0] == "?")
-	//{
-	//	if (command.size() != 1) {
-	//		return false;
-	//	}
-
-	//	
-	//	// Hiển thị toàn bộ lệnh
-	//	std::cout << "Commands may be abbreviated. Commands are:\n\n";
-	//	std::cout << "               delete         literal        prompt         send\n";
-	//	std::cout << "?              debug          ls             put            status\n";
-	//	std::cout << "append         dir            mdelete        pwd            trace\n";
-	//	std::cout << "ascii          disconnect     mdir           quit           type\n";
-	//	std::cout << "bell           get            mget           quote          user\n";
-	//	std::cout << "binary         glob           mkdir          recv           verbose\n";
-	//	std::cout << "bye            hash           mls            remotehelp     \n";
-	//	std::cout << "cd             help           mput           rename         \n";
-	//	std::cout << "close          lcd            open           rmdir          \n";
-
-	//	return true;
-	//}
 	//co 2 loai conenction la control conenction voi data conenction
 	//port 21 la de control connection
 	//data connection la cho cac lenh lien quan den thay doi data,.. nhu LIST, RETR, STOR nen can 1 cai port khac, can phai lay cai port voi ip khac 
@@ -487,19 +493,14 @@ bool SocketClient::processCommand()
 		return true;
 	}
 
-	//else if (command[0] == "get" || command[0] == "recv") {}
-	//else if (command[0] == "mget") {}
-	//else if (command[0] == "prompt") {}
 	//else if (command[0] == "ascii / binary") {}
-	//else if (command[0] == "status") {}
 	//else if (command[0] == "passive") {}
-	//else if (command[0] == "help" || command[0] == "?") {}
 
 	// bật/tắt việc hỏi xác nhận từng file khi dùng mget/mput
 	else if (command[0] == "prompt") {
 		if (command.size() != 1) return false;
 		promptMode = !promptMode;
-		cout << "Interactive prompting " << (promptMode ? "on" : "off") << ".\n";
+		cout << "Interactive prompting " << (promptMode ? "On" : "Off") << ".\n";
 		return true;
 	}
 
@@ -508,8 +509,15 @@ bool SocketClient::processCommand()
 		if (!isConnected) { 
 			cout << "Not connected.\n"; return true; 
 		}
-		string filename = getArgOrPrompt(command, 1, "Remote file name: ");
-		if (filename.empty()) return true;
+
+		if (command.size() != 2)
+		{
+			return false;
+		}
+		string filename = command[1];
+
+		//string filename = getArgOrPrompt(command, 1, "Remote file name: ");
+		//if (filename.empty()) return true;
 		get1File(filename);
 		return true;
 	}
@@ -742,18 +750,78 @@ bool SocketClient::processCommand()
 		}
 
 		// upload files
-		for (int i = 1; i < n; i++)
+		for (size_t i = 1; i < n; ++i) {
+			//string filename = command[i];
+			if (promptMode) {
+				cout << "Upload: " << command[i] << "? ";
+				string res;
+				getline(cin, res);
+				if (res != "y" && res != "Y") continue;
+			}
+			put1File(command[i]);
+			cout << "\n";
+		}
+	/*	for (int i = 1; i < n; i++)
 		{
 			cout << "Upload: " << command[i] << "\n";
 
 			put1File(command[i]);
 
 			cout << "\n";
-		}
+		}*/
 
 		return true;
 	}
 	
+	else if (command[0] == "help" || command[0] == "?")
+	{
+		if (command.size() != 1) {
+			return false;
+		}
+
+		std::cout << "================== FTP Client Help Menu ==================\n\n";
+
+		std::cout << "1. File and Directory Operations\n";
+		std::cout << "----------------------------------------------------------\n";
+		std::cout << "  ls                      List files and folders on the FTP server\n";
+		std::cout << "  cd      <dir>           Change current directory on the FTP server\n";
+		std::cout << "  pwd                     Show current directory on the FTP server\n";
+		std::cout << "  mkdir   <dir>           Create a new directory on the FTP server\n";
+		std::cout << "  rmdir   <dir>           Remove a directory from the FTP server\n";
+		std::cout << "  delete  <file>          Delete a file on the FTP server\n";
+		std::cout << "  rename  <old>   <new>   Rename a file on the FTP server\n\n";
+
+		std::cout << "2. Upload and Download\n";
+		std::cout << "----------------------------------------------------------\n";
+		std::cout << "  get     <file>          Download a file from the FTP server\n";
+		std::cout << "  recv    <file>          Download a file from the FTP server (alias for \"get\")\n";
+		std::cout << "  mget    <files>         Download multiple files\n";
+		std::cout << "  put     <file>          Upload a file\n";
+		std::cout << "  mput    <files>         Upload multiple files\n";
+		std::cout << "  prompt                  Toggle confirmation for \"mget/mput\" operations\n\n";
+
+		std::cout << "3. Session Management\n";
+		std::cout << "----------------------------------------------------------\n";
+		std::cout << "  ascii                   Set transfer mode to ASCII (text files)\n";
+		std::cout << "  binary                  Set transfer mode to Binary (non-text files)\n";
+		std::cout << "  status                  Show current session status\n";
+		std::cout << "  passive                 Toggle passive FTP mode on/off\n";
+		std::cout << "  open    <host>          Connect to FTP server\n";
+		std::cout << "  close                   Disconnect from FTP server\n";
+		std::cout << "  quit                    Exit the FTP client\n";
+		std::cout << "  bye                     Exit the FTP client (alias for \"quit\")\n\n";
+
+		std::cout << "4. Misc\n";
+		std::cout << "----------------------------------------------------------\n";
+		std::cout << "  help                    Show this help menu\n";
+		std::cout << "  ?                       Show this help menu (alias for \"help\")\n\n";
+
+		std::cout << "NOTE: If an argument includes spaces, wrap it in double quotes, e.g., \"My File.txt\".\n\n";
+
+		std::cout << "==========================================================\n";
+
+		return true;
+	}
 	else
 	{
 		return false;
@@ -1060,6 +1128,8 @@ void SocketClient::put1File(const string& filePath) // "D:\Folder A\fileA.txt"
 		// gửi chunk vừa đọc qua agent
 		send(clamavSocket, buffer, bytesRead, 0);
 	}
+
+	shutdown(clamavSocket, SD_SEND);
 
 
 	//  Bên agent: tạo file mới, đọc lại nội dung rồi bỏ vào file
