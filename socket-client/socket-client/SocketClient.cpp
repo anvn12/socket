@@ -10,7 +10,7 @@ void SocketClient::close() {
 
 void SocketClient::inputCommand() {
 	string temp;
-	getline(cin, temp);
+	std::getline(cin, temp);
 
 	// process string (erase redundant space, split words)
 	command = processCommandString(temp);
@@ -63,14 +63,14 @@ bool SocketClient::processCommand()
 		//	Nếu đã kết nối thì không kết nối lại
 		if (isConnected == true)
 		{
-			cout << "Already connected to " << serverIP << ", disconnect first.\n";
+			std::cout << "Already connected to " << serverIP << ", disconnect first.\n";
 			return true;
 		}
 
 		//	Nếu số lượng argument khác 2 (câu lệnh đúng theo kiểu: "open <IP>")
 		if (command.size() != 2)
 		{
-			//cout << "Invalid command.\n";
+			//std::cout << "Invalid command.\n";
 			return false;
 		}
 
@@ -125,20 +125,20 @@ bool SocketClient::processCommand()
 
 		//	Kết nối thành công
 		isConnected = true;
-		cout << "Connected to " << serverIP << endl;
+		std::cout << "Connected to " << serverIP << endl;
 
 		//	Nhận tin nhắn phản hồi cho việc kết nối thành công
-		cout << getResponseMessage();
+		std::cout << getResponseMessage();
 
 		//	Định dạng việc gửi command sang UTF8
 		//nhằm đảm bảo các command không bị sai định dạng
 		sendCommandMessage("OPTS UTF8 ON\r\n");
-		cout << getResponseMessage();		//tin nhắn phản hồi cho UTF8
+		std::cout << getResponseMessage();		//tin nhắn phản hồi cho UTF8
 
 
 		//	Yêu cầu nhập username
-		cout << "Username: ";
-		getline(cin, username);
+		std::cout << "Username: ";
+		std::getline(cin, username);
 
 
 		//	Câu command để gửi username cho FTP server
@@ -146,19 +146,19 @@ bool SocketClient::processCommand()
 
 		//	Gửi command và nhận phản hồi
 		sendCommandMessage(tempMsg.c_str());
-		cout << getResponseMessage();
+		std::cout << getResponseMessage();
 
 		
 		//	Nhập password
-		cout << "Password: ";
-		getline(cin, password);
+		std::cout << "Password: ";
+		std::getline(cin, password);
 
 		//	Câu command để gửi password cho FTP server
 		tempMsg = "PASS " + password + "\r\n";
 
 		//	Gửi command và nhận phản hồi
 		sendCommandMessage(tempMsg.c_str());
-		cout << getResponseMessage();
+		std::cout << getResponseMessage();
 
 		return true;
 	}
@@ -167,18 +167,18 @@ bool SocketClient::processCommand()
 	{
 		if (isConnected == false)	// not connected
 		{
-			cout << "Not connected.\n";
+			std::cout << "Not connected.\n";
 			return true;
 		}
 
 		if (command.size() != 1)
 		{
-			//cout << "Invalid command.\n";
+			//std::cout << "Invalid command.\n";
 			return false;
 		}
 
 		sendCommandMessage("QUIT\r\n");
-		cout << getResponseMessage();
+		std::cout << getResponseMessage();
 
 		// shutdown the send half of the connection since no more data will be sent
 		int iResult = shutdown(socket_, SD_SEND);
@@ -210,7 +210,7 @@ bool SocketClient::processCommand()
 
 
 		sendCommandMessage("QUIT\r\n");
-		cout << getResponseMessage();
+		std::cout << getResponseMessage();
 
 		// shutdown the send half of the connection since no more data will be sent
 		int iResult = shutdown(socket_, SD_SEND);
@@ -232,7 +232,7 @@ bool SocketClient::processCommand()
 		// if not connect
 		if (isConnected == false)
 		{
-			cout << "Not connected.\n";
+			std::cout << "Not connected.\n";
 			return true;
 		}
 
@@ -243,7 +243,7 @@ bool SocketClient::processCommand()
 
 
 		sendCommandMessage("XPWD\r\n");
-		cout << getResponseMessage();
+		std::cout << getResponseMessage();
 
 		return true;
 	}
@@ -251,7 +251,7 @@ bool SocketClient::processCommand()
 	else if (command[0] == "cd") 
 	{
 		if (!isConnected) { 
-			cout << "Not connected.\n"; 
+			std::cout << "Not connected.\n"; 
 			return true; 
 		}
 		if (command.size() != 2)
@@ -263,18 +263,18 @@ bool SocketClient::processCommand()
 
 		/*string folder = getArgOrPrompt(command, 1, "Remote directory: ");
 		if (folder.empty()) {
-			cout << "No directory was entered.\n";
+			std::cout << "No directory was entered.\n";
 			return true;
 		}*/
 		sendCommandMessage(("CWD " + folder + "\r\n").c_str());
-		cout << getResponseMessage();
+		std::cout << getResponseMessage();
 		return true;
 	}
 	//Create folder
 	else if (command[0] == "mkdir") 
 	{
 		if (!isConnected) { 
-			cout << "Not connected.\n"; 
+			std::cout << "Not connected.\n"; 
 			return true; 
 		}
 		if (command.size() != 2)
@@ -285,17 +285,17 @@ bool SocketClient::processCommand()
 
 		/*string folder = getArgOrPrompt(command, 1, "Folder name: ");
 		if (folder.empty()) {
-			cout << "No folder name was entered.\n";
+			std::cout << "No folder name was entered.\n";
 			return true;
 		}*/
 		sendCommandMessage(("XMKD " + folder + "\r\n").c_str());
-		cout << getResponseMessage();
+		std::cout << getResponseMessage();
 		return true;
 	}
 	//remove folder
 	else if (command[0] == "rmdir") {
 		if (!isConnected) { 
-			cout << "Not connected.\n"; 
+			std::cout << "Not connected.\n"; 
 			return true; 
 		}
 		if (command.size() != 2)
@@ -305,17 +305,17 @@ bool SocketClient::processCommand()
 		string folder = command[1];
 		/*string folder = getArgOrPrompt(command, 1, "Folder name: ");
 		if (folder.empty()) {
-			cout << "No folder name was entered.\n";
+			std::cout << "No folder name was entered.\n";
 			return true;
 		}*/
 		sendCommandMessage(("XRMD " + folder + "\r\n").c_str());
-		cout << getResponseMessage();
+		std::cout << getResponseMessage();
 		return true;
 	}
 	//delete a file
 	else if (command[0] == "delete") {
 		if (!isConnected) { 
-			cout << "Not connected.\n"; 
+			std::cout << "Not connected.\n"; 
 			return true; 
 		}
 		if (command.size() != 2)
@@ -326,18 +326,18 @@ bool SocketClient::processCommand()
 
 		/*string file = getArgOrPrompt(command, 1, "Enter file name: ");
 		if (file.empty()) {
-			cout << "No file name was entered.\n";
+			std::cout << "No file name was entered.\n";
 			return true;
 		}*/
 		sendCommandMessage(("DELE " + file + "\r\n").c_str());
-		cout << getResponseMessage();
+		std::cout << getResponseMessage();
 		return true;
 	}
 	//rename kiểu interactive, là nhập rename xong nhập từng cái name
 	//chứ dùng kiểu rename filename newname thì không được, t làm 1 lồn lỗi
 	else if (command[0] == "rename") {
 		if (!isConnected) {
-			cout << "Not connected.\n";
+			std::cout << "Not connected.\n";
 			return true;
 		}
 
@@ -349,25 +349,25 @@ bool SocketClient::processCommand()
 		string newName = command[2];
 
 		/*string originalName, newName;
-		cout << "From name: ";
-		getline(cin, originalName);
+		std::cout << "From name: ";
+		std::getline(cin, originalName);
 		if (originalName.empty()) {
-			cout << "No source name was entered.\n";
+			std::cout << "No source name was entered.\n";
 			return true;
 		}
 
-		cout << "To name: ";
-		getline(cin, newName);
+		std::cout << "To name: ";
+		std::getline(cin, newName);
 		if (newName.empty()) {
-			cout << "No new name was entered.\n";
+			std::cout << "No new name was entered.\n";
 			return true;
 		}*/
 
 
 		sendCommandMessage(("RNFR " + originalName + "\r\n").c_str());
-		cout << getResponseMessage(); 
+		std::cout << getResponseMessage(); 
 		sendCommandMessage(("RNTO " + newName + "\r\n").c_str());
-		cout << getResponseMessage();  
+		std::cout << getResponseMessage();  
 
 		return true;
 	}
@@ -379,10 +379,10 @@ bool SocketClient::processCommand()
 		}
 
 		if (isConnected) {
-			cout << "Connected to " << serverIP << ".\n";
+			std::cout << "Connected to " << serverIP << ".\n";
 		}
 		else {
-			cout << "Not connected.\n";
+			std::cout << "Not connected.\n";
 		}
 
 		// ON
@@ -407,6 +407,7 @@ bool SocketClient::processCommand()
 		return true;
 	}
 
+	else if (command[0] == "ls") {
 	//co 2 loai conenction la control conenction voi data conenction
 	//port 21 la de control connection
 	//data connection la cho cac lenh lien quan den thay doi data,.. nhu LIST, RETR, STOR nen can 1 cai port khac, can phai lay cai port voi ip khac 
@@ -417,7 +418,6 @@ bool SocketClient::processCommand()
 	//5. read from the data socket
 	//6. close the data socket
 	//7. getResponseMessage(); // final server reply
-	else if (command[0] == "ls") {
 		// if not connect
 		if (isConnected == false)
 		{
@@ -568,7 +568,7 @@ bool SocketClient::processCommand()
 		//	std::cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
 
 		//	string inputMode;
-		//	getline(cin, inputMode);
+		//	std::getline(cin, inputMode);
 		//	if (inputMode == "A" || inputMode == "a" ||
 		//		inputMode == "ascii" || inputMode == "ASCII")
 		//	{
@@ -611,7 +611,7 @@ bool SocketClient::processCommand()
 				std::cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
 
 				string inputMode;
-				getline(cin, inputMode);
+				std::getline(cin, inputMode);
 				if (inputMode == "A" || inputMode == "a" ||
 					inputMode == "ascii" || inputMode == "ASCII")
 				{
@@ -634,7 +634,7 @@ bool SocketClient::processCommand()
 			if (promptMode) {
 				std::cout << "Get \"" << command[i] << "\"? ";
 				string res;
-				getline(cin, res);
+				std::getline(cin, res);
 				if (res != "y" && res != "Y") continue;
 			}
 			get1File(command[i]);
@@ -666,7 +666,7 @@ bool SocketClient::processCommand()
 			std::cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
 
 			string inputMode;
-			getline(cin, inputMode);
+			std::getline(cin, inputMode);
 			if (inputMode == "A" || inputMode == "a" ||
 				inputMode == "ascii" || inputMode == "ASCII")
 			{
@@ -725,7 +725,7 @@ bool SocketClient::processCommand()
 				std::cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
 
 				string inputMode;
-				getline(cin, inputMode);
+				std::getline(cin, inputMode);
 				if (inputMode == "A" || inputMode == "a" ||
 					inputMode == "ascii" || inputMode == "ASCII")
 				{
@@ -748,7 +748,7 @@ bool SocketClient::processCommand()
 			if (promptMode) {
 				std::cout << "Upload: \"" << command[i] << "\"? ";
 				string res;
-				getline(cin, res);
+				std::getline(cin, res);
 				if (res != "y" && res != "Y") continue;
 			}
 			put1File(command[i]);
@@ -757,7 +757,61 @@ bool SocketClient::processCommand()
 
 		return true;
 	}
-	
+	else if (command[0] == "mput")
+	{
+		// mput <filePath> <filePath> <filePath> <filePath> <filePath>
+		// 
+		if (isConnected == false)
+		{
+			std::cout << "Not connected.\n";
+			return true;
+		}
+		unsigned long long n = command.size();
+		if (n < 2)
+		{
+			return false;
+		}
+
+		// upload files
+		for (size_t i = 1; i < n; ++i) {
+			do
+			{
+				std::cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
+
+				string inputMode;
+				std::getline(cin, inputMode);
+				if (inputMode == "A" || inputMode == "a" ||
+					inputMode == "ascii" || inputMode == "ASCII")
+				{
+					// run ascii command
+
+
+					break;
+				}
+				else if (inputMode == "I" || inputMode == "i" ||
+					inputMode == "binary" || inputMode == "BINARY")
+				{
+					// run binary command
+
+					break;
+				}
+
+				std::cout << "Invalid mode!\n";
+			} while (true);
+
+			if (promptMode) {
+				std::cout << "Upload: \"" << command[i] << "\"? ";
+				string res;
+				std::getline(cin, res);
+				if (res != "y" && res != "Y") continue;
+			}
+			put1File(command[i]);
+			std::cout << "\n";
+		}
+
+		return true;
+		}
+
 	else if (command[0] == "help" || command[0] == "?")
 	{
 		if (command.size() != 1) {
@@ -820,7 +874,7 @@ string SocketClient::getResponseMessage()
 
 	if (iResult > 0) {
 		responseMessage[iResult] = '\0';
-		//cout << responseMessage;
+		//std::cout << responseMessage;
 		return string(responseMessage); //tra ve gia tri de xu ly may cai khac
 	}
 
@@ -834,7 +888,7 @@ string SocketClient::getResponseMessage(SOCKET &s)
 
 	if (iResult > 0) {
 		responseMessage[iResult] = '\0';
-		//cout << responseMessage;
+		//std::cout << responseMessage;
 		return string(responseMessage); //tra ve gia tri de xu ly may cai khac
 	}
 
@@ -980,7 +1034,7 @@ SOCKET SocketClient::establishDataConnection(string& localIP, int& localPort) {
 	if (passiveMode) {
 		sendCommandMessage("PASV\r\n");
 		string response = getResponseMessage();
-		cout << response;
+		std::cout << response;
 
 		string dataIP, dataPort;
 		try {
@@ -1002,7 +1056,7 @@ SOCKET SocketClient::establishDataConnection(string& localIP, int& localPort) {
 
 		string portCommand = formatPORTCommand(localIP, localPort);
 		sendCommandMessage(portCommand.c_str());
-		cout << getResponseMessage();
+		std::cout << getResponseMessage();
 
 		return listenSocket;
 	}
@@ -1026,7 +1080,7 @@ string SocketClient::formatPORTCommand(const string& ip, int port) {
 
 // Tải 1 file từ server về client
 void SocketClient::get1File(const string& filename) {
-	cout << "Downloading: " << filename << "\n";
+	std::cout << "Downloading: " << filename << "\n";
 
 	// Tạo socket chờ kết nối (PORT mode)
 	string localIP;
@@ -1040,11 +1094,11 @@ void SocketClient::get1File(const string& filename) {
 	// Gửi PORT command cho server để nó biết nơi gửi dữ liệu
 	string portCmd = formatPORTCommand(localIP, localPort);
 	sendCommandMessage(portCmd.c_str());
-	cout << getResponseMessage();
+	std::cout << getResponseMessage();
 
 	// Gửi lệnh yêu cầu tải file
 	sendCommandMessage(("RETR " + filename + "\r\n").c_str());
-	cout << getResponseMessage(); // 150
+	std::cout << getResponseMessage(); // 150
 
 	// Chờ server kết nối lại vào data socket
 	SOCKET dataSocket = accept(listenSocket, nullptr, nullptr);
@@ -1076,7 +1130,7 @@ void SocketClient::get1File(const string& filename) {
 	closesocket(dataSocket);
 
 	// Nhận thông báo cuối cùng
-	cout << getResponseMessage(); // 226
+	std::cout << getResponseMessage(); // 226
 }
 
 
@@ -1089,7 +1143,7 @@ void SocketClient::put1File(const string& filePath) // "D:\Folder A\fileA.txt"
 	//ios::ate		mở từ cuối file (để lấy kích thước nhanh hơn)
 	if (!fin.is_open())
 	{
-		cout << "File not found or cannot open file.\n";
+		std::cout << "File not found or cannot open file.\n";
 		return;
 	}
 
@@ -1125,7 +1179,7 @@ void SocketClient::put1File(const string& filePath) // "D:\Folder A\fileA.txt"
 
 
 	//  first message "Scanning: " => kết nối được agent
-	cout << getResponseMessage(clamavSocket);
+	std::cout << getResponseMessage(clamavSocket);
 
 	// Gửi loại truyền là Ascii hay binary qua clamav
 	sendCommandMessage(clamavSocket, "I");
@@ -1135,11 +1189,11 @@ void SocketClient::put1File(const string& filePath) // "D:\Folder A\fileA.txt"
 	// 
 	//  Chuyển tên file
 	sendCommandMessage(clamavSocket, fileName.c_str());
-	cout << getResponseMessage(clamavSocket);
+	std::cout << getResponseMessage(clamavSocket);
 
 	//  Chuyển kích thước 
 	sendCommandMessage(clamavSocket, to_string(fileSize).c_str());
-	cout << getResponseMessage(clamavSocket);
+	std::cout << getResponseMessage(clamavSocket);
 
 	//  Đọc và Chuyển nội dung file theo từng chunk, tránh chuyển đi quá nhiều trong 1 lần
 	char buffer[CHUNK_SIZE];
@@ -1163,7 +1217,7 @@ void SocketClient::put1File(const string& filePath) // "D:\Folder A\fileA.txt"
 
 
 	// in cái dòng "Clamscan result:"
-	cout << getResponseMessage(clamavSocket);
+	std::cout << getResponseMessage(clamavSocket);
 
 	//	Lấy kết quả quét
 	int iResult = stoi(getResponseMessage(clamavSocket));
@@ -1171,7 +1225,7 @@ void SocketClient::put1File(const string& filePath) // "D:\Folder A\fileA.txt"
 	// OK -> chuyển qua server
 	if (iResult == 0)
 	{
-		cout << "OK\n";
+		std::cout << "OK\n";
 
 		// send file to ftp server
 
@@ -1199,7 +1253,7 @@ void SocketClient::put1File(const string& filePath) // "D:\Folder A\fileA.txt"
 
 		string portCommand = formatPORTCommand(localIP, localPort);
 		sendCommandMessage(portCommand.c_str());
-		cout << getResponseMessage();
+		std::cout << getResponseMessage();
 
 		//gui cai lenh STOR
 		string msg = "STOR " + fileName + "\r\n";
@@ -1207,7 +1261,7 @@ void SocketClient::put1File(const string& filePath) // "D:\Folder A\fileA.txt"
 
 		//in cai 150 ra truoc (bắt đầu gửi cái nội dung file qua)
 		//	150 Starting data transfer.
-		cout << getResponseMessage();
+		std::cout << getResponseMessage();
 
 		//accept incoming data connection
 		SOCKET dataSocket = accept(listenSocket, nullptr, nullptr);
@@ -1240,16 +1294,16 @@ void SocketClient::put1File(const string& filePath) // "D:\Folder A\fileA.txt"
 		closesocket(dataSocket);
 
 		// 226 Operation successful
-		cout << getResponseMessage();
+		std::cout << getResponseMessage();
 	}
 	// Nếu có virus (1) hoặc lỗi (2) thì không gửi qua server
 	else if (iResult == 1)
 	{
-		cout << "WARNING: Clamscan found threats!\n";
+		std::cout << "WARNING: Clamscan found threats!\n";
 	}
 	else
 	{
-		cout << "ERROR: Scan failed!\n";
+		std::cout << "ERROR: Scan failed!\n";
 		return;
 	}
 
@@ -1266,7 +1320,7 @@ void SocketClient::put1FileASCII(const string& filePath) // "D:\Folder A\fileA.t
 	fin.open(filePath);
 	if (!fin.is_open())
 	{
-		cout << "File not found or cannot open file.\n";
+		std::cout << "File not found or cannot open file.\n";
 		return;
 	}
 
@@ -1295,7 +1349,7 @@ void SocketClient::put1FileASCII(const string& filePath) // "D:\Folder A\fileA.t
 
 
 	//  first message "Scanning: " => kết nối được agent
-	cout << getResponseMessage(clamavSocket);
+	std::cout << getResponseMessage(clamavSocket);
 
 
 	// Gửi loại truyền là Ascii hay binary qua clamav
@@ -1306,11 +1360,11 @@ void SocketClient::put1FileASCII(const string& filePath) // "D:\Folder A\fileA.t
 	// 
 	//  Chuyển tên file
 	sendCommandMessage(clamavSocket, fileName.c_str());
-	cout << getResponseMessage(clamavSocket);
+	std::cout << getResponseMessage(clamavSocket);
 
 	// ASCII nên chuyển theo dòng
 	string buffer;
-	while (getline(fin, buffer))
+	while (std::getline(fin, buffer))
 	{
 		//thêm endline để gửi nội dung có sẵn ngăn dòng (nếu không thì thông tin bị dính liền nhau)
 		buffer += "\n";		
@@ -1327,7 +1381,7 @@ void SocketClient::put1FileASCII(const string& filePath) // "D:\Folder A\fileA.t
 
 
 	// in cái dòng "Clamscan result:"
-	cout << getResponseMessage(clamavSocket);
+	std::cout << getResponseMessage(clamavSocket);
 
 	//	Lấy kết quả quét
 	int iResult = stoi(getResponseMessage(clamavSocket));
@@ -1335,7 +1389,7 @@ void SocketClient::put1FileASCII(const string& filePath) // "D:\Folder A\fileA.t
 	// OK -> chuyển qua server
 	if (iResult == 0)
 	{
-		cout << "OK\n";
+		std::cout << "OK\n";
 
 		// send file to ftp server
 
@@ -1363,7 +1417,7 @@ void SocketClient::put1FileASCII(const string& filePath) // "D:\Folder A\fileA.t
 
 		string portCommand = formatPORTCommand(localIP, localPort);
 		sendCommandMessage(portCommand.c_str());
-		cout << getResponseMessage();
+		std::cout << getResponseMessage();
 
 		//gui cai lenh STOR
 		string msg = "STOR " + fileName + "\r\n";
@@ -1371,7 +1425,7 @@ void SocketClient::put1FileASCII(const string& filePath) // "D:\Folder A\fileA.t
 
 		//in cai 150 ra truoc (bắt đầu gửi cái nội dung file qua)
 		//	150 Starting data transfer.
-		cout << getResponseMessage();
+		std::cout << getResponseMessage();
 
 		//accept incoming data connection
 		SOCKET dataSocket = accept(listenSocket, nullptr, nullptr);
@@ -1388,7 +1442,7 @@ void SocketClient::put1FileASCII(const string& filePath) // "D:\Folder A\fileA.t
 
 
 		// Đọc và chuyển nội dung qua server
-		while (getline(fin, buffer))
+		while (std::getline(fin, buffer))
 		{
 			buffer += "\n";
 
@@ -1399,16 +1453,16 @@ void SocketClient::put1FileASCII(const string& filePath) // "D:\Folder A\fileA.t
 		closesocket(dataSocket);
 
 		// 226 Operation successful
-		cout << getResponseMessage();
+		std::cout << getResponseMessage();
 	}
 	// Nếu có virus (1) hoặc lỗi (2) thì không gửi qua server
 	else if (iResult == 1)
 	{
-		cout << "WARNING: Clamscan found threats!\n";
+		std::cout << "WARNING: Clamscan found threats!\n";
 	}
 	else
 	{
-		cout << "ERROR: Scan failed!\n";
+		std::cout << "ERROR: Scan failed!\n";
 		return;
 	}
 
