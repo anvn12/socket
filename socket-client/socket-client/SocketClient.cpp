@@ -333,8 +333,7 @@ bool SocketClient::processCommand()
 		std::cout << getResponseMessage();
 		return true;
 	}
-	//rename kiểu interactive, là nhập rename xong nhập từng cái name
-	//chứ dùng kiểu rename filename newname thì không được, t làm 1 lồn lỗi
+	//rename a file
 	else if (command[0] == "rename") {
 		if (!isConnected) {
 			std::cout << "Not connected.\n";
@@ -562,32 +561,36 @@ bool SocketClient::processCommand()
 			return false;
 		}
 
+		char prevType = type;
 
-		//do
-		//{
-		//	std::cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
+		do
+		{
+			std::cout << "Select transfer mode: [A] ASCII or [I] Binary: ";
 
-		//	string inputMode;
-		//	std::getline(cin, inputMode);
-		//	if (inputMode == "A" || inputMode == "a" ||
-		//		inputMode == "ascii" || inputMode == "ASCII")
-		//	{
-		//		// run ascii command
+			string inputMode;
+			std::getline(cin, inputMode);
+			if (inputMode == "A" || inputMode == "a" ||
+				inputMode == "ascii" || inputMode == "ASCII")
+			{
+				// run ascii command
+				type = 'A';
+				sendCommandMessage("TYPE A\r\n");
+				cout << getResponseMessage();
 
+				break;
+			}
+			else if (inputMode == "I" || inputMode == "i" ||
+				inputMode == "binary" || inputMode == "BINARY")
+			{
+				// run binary command
+				type = 'I';
+				sendCommandMessage("TYPE I\r\n");
+				cout << getResponseMessage();
+				break;
+			}
 
-		//		break;
-		//	}
-		//	else if (inputMode == "I" || inputMode == "i" ||
-		//		inputMode == "binary" || inputMode == "BINARY")
-		//	{
-		//		// run binary command
-
-		//		break;
-		//	}
-
-		//	std::cout << "Invalid mode!\n";
-		//} while (true);
-
+			std::cout << "Invalid mode!\n";
+		} while (true);
 
 
 		string filename = command[1];
@@ -595,11 +598,14 @@ bool SocketClient::processCommand()
 		//string filename = getArgOrPrompt(command, 1, "Remote file name: ");
 		//if (filename.empty()) return true;
 		if (type == 'A') {
-			get1FileAscii(filename);
+			get1FileASCII(filename);
 		}
 		else {
 			get1File(filename);
 		}
+
+		type = prevType;
+
 		return true;
 	}
 
@@ -650,7 +656,13 @@ bool SocketClient::processCommand()
 				std::cout << "Invalid mode!\n";
 			} while (true);
 
-			get1File(command[i]);
+
+			if (type == 'A') {
+				get1FileASCII(command[i]);
+			}
+			else {
+				get1File(command[i]);
+			}
 			std::cout << "\n";
 		}
 
@@ -1082,8 +1094,8 @@ string SocketClient::formatPORTCommand(const string& ip, int port) {
 }
 
 // Tải 1 file từ server về client
-void SocketClient::get1File(const string& filename) {
-	std::cout << "Downloading: " << filename << "\n";
+void SocketClient::get1File(string filename) {
+	std::cout << "Downloading (Binary): " << filename << "\n";
 
 	// Tạo socket chờ kết nối (PORT mode)
 	string localIP;
@@ -1112,8 +1124,30 @@ void SocketClient::get1File(const string& filename) {
 		return;
 	}
 
-	// tạo file để ghi
-	ofstream fout(filename, ios::binary);
+	// Kiểm tra thư mục data có tồn tại hay không
+	// Cần thư mục data để chứa file tải về (tránh tải trùng tên file)
+		//https://www.geeksforgeeks.org/cpp/how-to-check-a-file-or-directory-exists-in-cpp/
+	const char* dir = "clientdata";
+
+	struct stat sb;
+
+	// Calls the function with path as argument
+	// If the file/directory exists at the path returns 0
+	// Nếu thư mục tmp không tồn tại thì tạo thư mục tmp
+	if (stat(dir, &sb) != 0)
+	{
+		string mkdirCommand = "cmd /C \"mkdir " + string(dir) + "\"";
+
+		system(mkdirCommand.c_str());
+	}
+
+	// Đổi tên file sang clientdata\filename
+	filename = string(dir) + "\\" + filename;
+
+
+
+	// tạo file để ghi, trunc để khi mở file sẽ xóa hết nôi dung
+	ofstream fout(filename, ios::binary | ios::trunc);
 	if (!fout.is_open()) {
 		cerr << "Cannot open file to write\n";
 		closesocket(dataSocket);
@@ -1137,7 +1171,7 @@ void SocketClient::get1File(const string& filename) {
 }
 
 // tai 1 file nhung la che do ascii
-void SocketClient::get1FileASCII(const string& filename) {
+void SocketClient::get1FileASCII(string filename) {
 	cout << "Downloading (ASCII): " << filename << "\n";
 
 	// lang nghe
@@ -1164,7 +1198,31 @@ void SocketClient::get1FileASCII(const string& filename) {
 		return;
 	}
 
-	ofstream fout(filename); // mở file ở chế độ text
+
+
+	// Kiểm tra thư mục data có tồn tại hay không
+	// Cần thư mục data để chứa file tải về (tránh tải trùng tên file)
+		//https://www.geeksforgeeks.org/cpp/how-to-check-a-file-or-directory-exists-in-cpp/
+	const char* dir = "clientdata";
+
+	struct stat sb;
+
+	// Calls the function with path as argument
+	// If the file/directory exists at the path returns 0
+	// Nếu thư mục tmp không tồn tại thì tạo thư mục tmp
+	if (stat(dir, &sb) != 0)
+	{
+		string mkdirCommand = "cmd /C \"mkdir " + string(dir) + "\"";
+
+		system(mkdirCommand.c_str());
+	}
+
+	// Đổi tên file sang clientdata\filename
+	filename = string(dir) + "\\" + filename;
+
+
+
+	ofstream fout(filename, ios::trunc); // mở file ở chế độ text
 	if (!fout.is_open()) {
 		cerr << "Cannot open file to write\n";
 		closesocket(dataSocket);
