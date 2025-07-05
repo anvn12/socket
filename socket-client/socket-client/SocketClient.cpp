@@ -620,7 +620,7 @@ bool SocketClient::processCommand()
 
 		for (size_t i = 1; i < command.size(); ++i) {
 			if (promptMode) {
-				std::cout << "Get \"" << command[i] << "\"? (Press 'y' to upload): ";
+				std::cout << "Get \"" << command[i] << "\"? (Press 'y' to download): ";
 				string res;
 				std::getline(cin, res);
 				if (res != "y" && res != "Y") continue;
@@ -1097,27 +1097,23 @@ string SocketClient::formatPORTCommand(const string& ip, int port) {
 void SocketClient::get1File(string filename) {
 	std::cout << "Downloading (Binary): " << filename << "\n";
 
-	// Tạo socket chờ kết nối (PORT mode)
 	string localIP;
 	int localPort;
-	SOCKET listenSocket = createListeningSocket(localIP, localPort);
-	if (listenSocket == INVALID_SOCKET) {
-		cerr << "Failed to create listening socket.\n";
+	SOCKET dataOrListen = establishDataConnection(localIP, localPort);
+	if (dataOrListen == INVALID_SOCKET) {
+		cerr << "Failed to create data connection\n";
 		return;
 	}
-
-	// Gửi PORT command cho server để nó biết nơi gửi dữ liệu
-	string portCmd = formatPORTCommand(localIP, localPort);
-	sendCommandMessage(portCmd.c_str());
-	std::cout << getResponseMessage();
 
 	// Gửi lệnh yêu cầu tải file
 	sendCommandMessage(("RETR " + filename + "\r\n").c_str());
 	std::cout << getResponseMessage(); // 150
 
-	// Chờ server kết nối lại vào data socket
-	SOCKET dataSocket = accept(listenSocket, nullptr, nullptr);
-	closesocket(listenSocket);\
+	//neu la active thi can accept
+	SOCKET dataSocket = passiveMode ? dataOrListen : accept(dataOrListen, nullptr, nullptr);
+	if (!passiveMode) {
+		closesocket(dataOrListen); //tat cai listen neu la active
+	}
 
 	if (dataSocket == INVALID_SOCKET) {
 		cerr << "Failed to accept data connection\n";
@@ -1177,28 +1173,26 @@ void SocketClient::get1FileASCII(string filename) {
 	// lang nghe
 	string localIP;
 	int localPort;
-	SOCKET listenSocket = createListeningSocket(localIP, localPort);
-	if (listenSocket == INVALID_SOCKET) {
-		cerr << "Failed to create listening socket.\n";
+	SOCKET dataOrListen = establishDataConnection(localIP, localPort);
+	if (dataOrListen == INVALID_SOCKET) {
+		cerr << "Failed to create data connection\n";
 		return;
 	}
 
-	string portCmd = formatPORTCommand(localIP, localPort);
-	sendCommandMessage(portCmd.c_str());
-	cout << getResponseMessage();
-
+	// Gửi lệnh yêu cầu tải file
 	sendCommandMessage(("RETR " + filename + "\r\n").c_str());
-	cout << getResponseMessage(); // 150
+	std::cout << getResponseMessage(); // 150
 
-	SOCKET dataSocket = accept(listenSocket, nullptr, nullptr);
-	closesocket(listenSocket);
+	//neu la active thi can accept
+	SOCKET dataSocket = passiveMode ? dataOrListen : accept(dataOrListen, nullptr, nullptr);
+	if (!passiveMode) {
+		closesocket(dataOrListen); //tat cai listen neu la active
+	}
 
 	if (dataSocket == INVALID_SOCKET) {
 		cerr << "Failed to accept data connection\n";
 		return;
 	}
-
-
 
 	// Kiểm tra thư mục data có tồn tại hay không
 	// Cần thư mục data để chứa file tải về (tránh tải trùng tên file)
@@ -1355,29 +1349,22 @@ void SocketClient::put1File(const string& filePath) // "D:\Folder A\fileA.txt"
 		// Phần này giống trong command "ls"
 		string localIP;
 		int localPort;
-		SOCKET listenSocket = createListeningSocket(localIP, localPort);
-		if (listenSocket == INVALID_SOCKET) {
-			cerr << "Failed to create listening socket for PORT mode";
+		SOCKET dataOrListen = establishDataConnection(localIP, localPort);
+		if (dataOrListen == INVALID_SOCKET) {
+			cerr << "Data connection failed\n";
 			return;
 		}
 
-		string portCommand = formatPORTCommand(localIP, localPort);
-		sendCommandMessage(portCommand.c_str());
-		std::cout << getResponseMessage();
+		// Send STOR command:
+		sendCommandMessage(("STOR " + fileName + "\r\n").c_str());
+		cout << getResponseMessage();  // 150
 
-		//gui cai lenh STOR
-		string msg = "STOR " + fileName + "\r\n";
-		sendCommandMessage(msg.c_str());
-
-		//in cai 150 ra truoc (bắt đầu gửi cái nội dung file qua)
-		//	150 Starting data transfer.
-		std::cout << getResponseMessage();
-
-		//accept incoming data connection
-		SOCKET dataSocket = accept(listenSocket, nullptr, nullptr);
-		closesocket(listenSocket);
+		SOCKET dataSocket = passiveMode ? dataOrListen : accept(dataOrListen, nullptr, nullptr);
+		if (!passiveMode) {
+			closesocket(dataOrListen);
+		}
 		if (dataSocket == INVALID_SOCKET) {
-			cerr << "Failed to accept data connection";
+			cerr << "Failed to create data connection\n";
 			return;
 		}
 
@@ -1519,29 +1506,22 @@ void SocketClient::put1FileASCII(const string& filePath) // "D:\Folder A\fileA.t
 		// Phần này giống trong command "ls"
 		string localIP;
 		int localPort;
-		SOCKET listenSocket = createListeningSocket(localIP, localPort);
-		if (listenSocket == INVALID_SOCKET) {
-			cerr << "Failed to create listening socket for PORT mode";
+		SOCKET dataOrListen = establishDataConnection(localIP, localPort);
+		if (dataOrListen == INVALID_SOCKET) {
+			cerr << "Data connection failed\n";
 			return;
 		}
 
-		string portCommand = formatPORTCommand(localIP, localPort);
-		sendCommandMessage(portCommand.c_str());
-		std::cout << getResponseMessage();
+		// Send STOR command:
+		sendCommandMessage(("STOR " + fileName + "\r\n").c_str());
+		cout << getResponseMessage();  // 150
 
-		//gui cai lenh STOR
-		string msg = "STOR " + fileName + "\r\n";
-		sendCommandMessage(msg.c_str());
-
-		//in cai 150 ra truoc (bắt đầu gửi cái nội dung file qua)
-		//	150 Starting data transfer.
-		std::cout << getResponseMessage();
-
-		//accept incoming data connection
-		SOCKET dataSocket = accept(listenSocket, nullptr, nullptr);
-		closesocket(listenSocket);
+		SOCKET dataSocket = passiveMode ? dataOrListen : accept(dataOrListen, nullptr, nullptr);
+		if (!passiveMode) {
+			closesocket(dataOrListen);
+		}
 		if (dataSocket == INVALID_SOCKET) {
-			cerr << "Failed to accept data connection";
+			cerr << "Failed to create data connection\n";
 			return;
 		}
 
