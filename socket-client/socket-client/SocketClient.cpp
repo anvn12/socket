@@ -620,7 +620,7 @@ bool SocketClient::processCommand()
 
 		for (size_t i = 1; i < command.size(); ++i) {
 			if (promptMode) {
-				std::cout << "Get \"" << command[i] << "\"? (Press 'y' to upload)";
+				std::cout << "Get \"" << command[i] << "\"? (Press 'y' to upload): ";
 				string res;
 				std::getline(cin, res);
 				if (res != "y" && res != "Y") continue;
@@ -761,7 +761,7 @@ bool SocketClient::processCommand()
 		// upload files
 		for (size_t i = 1; i < n; ++i) {
 			if (promptMode) {
-				std::cout << "Upload: \"" << command[i] << "\"? (Press 'y' to upload)";
+				std::cout << "Upload: \"" << command[i] << "\"? (Press 'y' to upload): ";
 				string res;
 				std::getline(cin, res);
 				if (res != "y" && res != "Y") continue;
@@ -798,12 +798,12 @@ bool SocketClient::processCommand()
 
 			if (type == 'A') // ascii
 			{
-				put1FileASCII(command[1]);
+				put1FileASCII(command[i]);
 
 			}
 			else // binary
 			{
-				put1File(command[1]);
+				put1File(command[i]);
 			}
 
 			std::cout << "\n";
