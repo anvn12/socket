@@ -7,6 +7,7 @@
 #include <vector>
 #include <chrono>
 
+#include <sys/stat.h>
 #include <fstream>
 
 #pragma comment(lib, "Ws2_32.lib")
@@ -21,8 +22,8 @@ private:
 
 	bool isConnected = false;
 	bool isQuit = false;
-	bool passiveMode = false; //mac dinh la port mode
-	bool promptMode = true; // hỏi xác nhận khi dùng mget
+	bool passiveMode = false;	//mac dinh la port mode
+	bool promptMode = true;		// hỏi xác nhận khi dùng mget
 	vector<string> command;		// store command and arguments
 	string serverIP;
 	string username;
@@ -57,8 +58,8 @@ private:
 	void sendCommandMessage(SOCKET& s, const char* msg);
 
 
-	void get1File(const string& filename);
-	void get1FileASCII(const string& filename);
+	void get1File(string filename);
+	void get1FileASCII(string filename);
 	void put1File(const string& filePath);
 	void put1FileASCII(const string& filePath);
 
@@ -79,4 +80,4 @@ public:
 	bool processCommand();	// false: invalid command
 };
 
-
+ 
