@@ -430,66 +430,27 @@ bool SocketClient::processCommand()
 
 		string localIP;
 		int localPort;
-		SOCKET dataSocket = INVALID_SOCKET;
-
-		if (passiveMode) {
-			//cho pasv mode
-			dataSocket = establishDataConnection(localIP, localPort);
-			if (dataSocket == INVALID_SOCKET) {
-				cerr << "Failed to create data connection \n";
-				return true;
-			}
-		}
-		else {
-			//cho port mode
-			SOCKET listenSocket = establishDataConnection(localIP, localPort);
-			if (listenSocket == INVALID_SOCKET) {
-				cerr << "Failed to create listening socket \n";
-				return true;
-			}
-
-			sendCommandMessage("NLST\r\n");
-			//in cai 150 ra truoc
-			std::cout << getResponseMessage();
-
-			//accept incoming data connection
-			dataSocket = accept(listenSocket, nullptr, nullptr);
-			closesocket(listenSocket);
-
-			if (dataSocket == INVALID_SOCKET) {
-				cerr << "Failed to accept data connection \n";
-				return true;
-			}
-		}
-		if (passiveMode) {
-			//gui lenh cho pasv
-			sendCommandMessage("NLST\r\n");
-			std::cout << getResponseMessage();
+		SOCKET dataOrListen = establishDataConnection(localIP, localPort);
+		if (dataOrListen == INVALID_SOCKET) {
+			cerr << "Failed to create data connection\n";
+			return;
 		}
 
-		//if (listenSocket == INVALID_SOCKET) {
-		//	cerr << "Failed to create listening socket for PORT mode";
-		//	return true;
-		//}
+		sendCommandMessage("NLST\r\n");
+		cout << getResponseMessage();  // 150
 
-		//string portCommand = formatPORTCommand(localIP, localPort);
-		//sendCommandMessage(portCommand.c_str());
-		//std::cout << getResponseMessage();
+		//result = condition ? value_if_true : value_if_false;
+		//de kieu cu dai qua t sua lai ntn 
+		SOCKET dataSocket = passiveMode ? dataOrListen : accept(dataOrListen, nullptr, nullptr);
+		if (!passiveMode) {
+			closesocket(dataOrListen);
+		}
+		if (dataSocket == INVALID_SOCKET) {
+			cerr << "Failed to accept data connection\n";
+			return;
+		}
 
-		////gui cai lenh NLST
-		//sendCommandMessage("NLST\r\n");
-		////in cai 150 ra truoc
-		//std::cout << getResponseMessage();
-		////accept incoming data connection
-		//SOCKET dataSocket = accept(listenSocket, nullptr, nullptr);
-		//closesocket(listenSocket);
-
-		//if (dataSocket == INVALID_SOCKET) {
-		//	cerr << "Failed to accept data connection";
-		//	return true;
-		//}
 		
-		//doan nay tro xuong k khac gi pasv mode
 		//bat dau doc directory tu data socket
 		char buffer[4096];
 		string directoryListing;
@@ -1351,7 +1312,7 @@ void SocketClient::put1File(const string& filePath) // "D:\Folder A\fileA.txt"
 		int localPort;
 		SOCKET dataOrListen = establishDataConnection(localIP, localPort);
 		if (dataOrListen == INVALID_SOCKET) {
-			cerr << "Data connection failed\n";
+			cerr << "Failed to create data connection\n";
 			return;
 		}
 
@@ -1364,7 +1325,7 @@ void SocketClient::put1File(const string& filePath) // "D:\Folder A\fileA.txt"
 			closesocket(dataOrListen);
 		}
 		if (dataSocket == INVALID_SOCKET) {
-			cerr << "Failed to create data connection\n";
+			cerr << "Failed to accept data connection\n";
 			return;
 		}
 
@@ -1508,7 +1469,7 @@ void SocketClient::put1FileASCII(const string& filePath) // "D:\Folder A\fileA.t
 		int localPort;
 		SOCKET dataOrListen = establishDataConnection(localIP, localPort);
 		if (dataOrListen == INVALID_SOCKET) {
-			cerr << "Data connection failed\n";
+			cerr << "Failed to create data connection\n";
 			return;
 		}
 
@@ -1521,7 +1482,7 @@ void SocketClient::put1FileASCII(const string& filePath) // "D:\Folder A\fileA.t
 			closesocket(dataOrListen);
 		}
 		if (dataSocket == INVALID_SOCKET) {
-			cerr << "Failed to create data connection\n";
+			cerr << "Failed to accept data connection\n";
 			return;
 		}
 
