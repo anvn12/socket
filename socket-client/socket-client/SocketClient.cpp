@@ -594,7 +594,12 @@ bool SocketClient::processCommand()
 
 		//string filename = getArgOrPrompt(command, 1, "Remote file name: ");
 		//if (filename.empty()) return true;
-		get1File(filename);
+		if (type == 'A') {
+			get1FileAscii(filename);
+		}
+		else {
+			get1File(filename);
+		}
 		return true;
 	}
 
@@ -1129,6 +1134,55 @@ void SocketClient::get1File(const string& filename) {
 
 	// Nhận thông báo cuối cùng
 	std::cout << getResponseMessage(); // 226
+}
+
+// tai 1 file nhung la che do ascii
+void SocketClient::get1FileASCII(const string& filename) {
+	cout << "Downloading (ASCII): " << filename << "\n";
+
+	// lang nghe
+	string localIP;
+	int localPort;
+	SOCKET listenSocket = createListeningSocket(localIP, localPort);
+	if (listenSocket == INVALID_SOCKET) {
+		cerr << "Failed to create listening socket.\n";
+		return;
+	}
+
+	string portCmd = formatPORTCommand(localIP, localPort);
+	sendCommandMessage(portCmd.c_str());
+	cout << getResponseMessage();
+
+	sendCommandMessage(("RETR " + filename + "\r\n").c_str());
+	cout << getResponseMessage(); // 150
+
+	SOCKET dataSocket = accept(listenSocket, nullptr, nullptr);
+	closesocket(listenSocket);
+
+	if (dataSocket == INVALID_SOCKET) {
+		cerr << "Failed to accept data connection\n";
+		return;
+	}
+
+	ofstream fout(filename); // mở file ở chế độ text
+	if (!fout.is_open()) {
+		cerr << "Cannot open file to write\n";
+		closesocket(dataSocket);
+		return;
+	}
+
+	char buffer[CHUNK_SIZE + 1];	// dam bao ket thuc chuoi
+	int bytesReceived;
+	while ((bytesReceived = recv(dataSocket, buffer, CHUNK_SIZE, 0)) > 0) {
+		buffer[bytesReceived] = '\0';
+		fout << buffer;
+	}
+
+	fout.close();
+	shutdown(dataSocket, SD_BOTH);
+	closesocket(dataSocket);
+
+	cout << getResponseMessage(); // 226 Transfer complete (chac vay)
 }
 
 
