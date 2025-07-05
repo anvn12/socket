@@ -58,6 +58,7 @@ private:
 
 
 	void get1File(const string& filename);
+	void get1FileASCII(const string& filename);
 	void put1File(const string& filePath);
 	void put1FileASCII(const string& filePath);
 
