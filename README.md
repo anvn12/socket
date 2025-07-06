@@ -9,6 +9,7 @@
 5. Ở chương trình "socket-client", lúc này có thể tiến hành nhập các câu lệnh để kết nối server (có thể gõ "help" hoặc "?" để hiện hướng dẫn các câu lệnh)
 # Câu lệnh mẫu và kết quả
 - Nếu chế độ passive đang tắt (off) thì sẽ hiện dòng `200 PORT command successful.` (nếu có). Ngược lại, nếu chế độ passive đang bật (on) thì sẽ hiện dòng `227 Entering Passive Mode (192,168,157,1,78,130)` thay cho `200 PORT command successful.` (nếu có).
+- Nếu nhập câu lệnh không hợp lệ sẽ hiện `Invalid command.`.
 Sau đây là các lệnh và kết quả trả về mẫu (giả sử server IP là "192.168.157.1", passive off):
 ## File and Directory Operations
 ### ls

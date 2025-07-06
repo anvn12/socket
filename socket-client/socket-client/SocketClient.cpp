@@ -781,6 +781,11 @@ bool SocketClient::processCommand()
 			std::cout << "Not connected.\n"; return true;
 		}
 
+		if (command.size() != 1)
+		{
+			return false;
+		}
+
 		type = 'A';
 		sendCommandMessage("TYPE A\r\n");
 		cout << getResponseMessage();
@@ -789,6 +794,11 @@ bool SocketClient::processCommand()
 	{
 		if (!isConnected) {
 			std::cout << "Not connected.\n"; return true;
+		}
+
+		if (command.size() != 1)
+		{
+			return false;
 		}
 
 		type = 'I';
