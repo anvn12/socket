@@ -433,7 +433,7 @@ bool SocketClient::processCommand()
 		SOCKET dataOrListen = establishDataConnection(localIP, localPort);
 		if (dataOrListen == INVALID_SOCKET) {
 			cerr << "Failed to create data connection\n";
-			return;
+			return false;
 		}
 
 		sendCommandMessage("NLST\r\n");
@@ -447,7 +447,7 @@ bool SocketClient::processCommand()
 		}
 		if (dataSocket == INVALID_SOCKET) {
 			cerr << "Failed to accept data connection\n";
-			return;
+			return false;
 		}
 
 		
