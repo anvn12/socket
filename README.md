@@ -7,8 +7,6 @@
 	`===ClamAV Agent===`
 	`Waiting for file...`
 5. Ở chương trình "socket-client" (ở máy chạy FTP client), lúc này có thể tiến hành nhập các câu lệnh để kết nối server (có thể gõ "help" hoặc "?" để hiện hướng dẫn các câu lệnh)
-
-- Bước 2 và 3 có thể thay thế bằng: vào thư mục "socket-client", sau đó vào thư mục "x64", vào thư mục "Debug", chạy "clamav-agent.exe" (ở máy host server) và chạy "clamav-client.exe" (ở máy chạy FTP client).
 # Câu lệnh mẫu và kết quả
 - Nếu chế độ passive đang tắt (off) thì sẽ hiện dòng `200 PORT command successful.` (nếu có). Ngược lại, nếu chế độ passive đang bật (on) thì sẽ hiện dòng `227 Entering Passive Mode (192,168,157,1,78,130)` thay cho `200 PORT command successful.` (nếu có).
 - Nếu nhập câu lệnh không hợp lệ sẽ hiện `Invalid command.`.
