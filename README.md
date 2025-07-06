@@ -323,6 +323,8 @@ Nhóm sinh viên đã dùng phần mềm FTP Server của FileZilla trong suốt
 6. Ở phần "Users", có thể thêm và tùy chỉnh các user theo ý muốn.
 7. Có thể tùy chỉnh các chức năng thêm nếu muốn.
 8. Cuối cùng chọn "Apply", chọn "OK".
+
+Nhóm sinh viên đã tham khảo cách thiết lập ở [Youtube FileZilla](https://youtu.be/tCftckKivkc?si=dEFg4bjRODUxOdLG). Có thể xem nếu cần thêm mô phỏng bằng hình ảnh.
 # Tải và thiết lập ClamAV
 1. Truy cập [ClamAV Download](https://www.clamav.net/downloads)
 2. Chọn phiên bản và hệ điều hành (Windows)
