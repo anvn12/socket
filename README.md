@@ -335,4 +335,5 @@ Nhóm sinh viên đã dùng phần mềm FTP Server của FileZilla trong suốt
 9. Mở cmd (còn gọi là "Command Prompt"), sau đó chuyển đến đường dẫn đã ghi lại ở bước 4 bằng lệnh "cd". Chẳng hạn: "cd "C:\Users\admin\Downloads\clamav-1.4.3.win.x64"". Nếu đường dẫn ở bước 4 nằm khác phân vùng ổ cứng, có thể thực hiện "cd /d `<đường dẫn>`".
 10. Tiến hành gõ "freshclam.exe" ở cmd và đợi đến khi tải xong.
 11. Lúc này ClamAV đã được tải, để kiểm tra có thể tiến hành chạy thử "clamscan `<file>`". Nếu có thể quét thì cài đặt thành công.
+
 Nhóm sinh viên đã tham khảo cách cài đặt ở [Youtube ClamAV](https://youtu.be/9gQXBUJbSHE?si=R2lJ_mZxtO99K0_h). Có thể xem nếu cần thêm mô phỏng bằng hình ảnh.
