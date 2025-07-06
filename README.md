@@ -2,11 +2,13 @@
 # Hướng dẫn khởi động chương trình
 1. Đảm bảo đã cài đặt ClamAV (nếu chưa cài thì kéo đến phần cuối tệp tin này), đã host FTP server (đảm bảo biết các thông tin cần cho kết nối như địa chỉ IP, tên user, password...) và đã cài đặt Microsoft Visual Studio 2022.
 2. Vào thư mục "socket-client", khởi động tệp tin "socket.sln" bằng Microsoft Visual Studio 2022.
-3. Khởi động lần lượt 2 project "clamav-agent" và "socket-client".
-4. Sau khi khởi động "clamav-agent", nhập đường dẫn đến thư mục chứa ClamAV (đường dẫn có thể khác sau tùy thiết lập cài đặt). Nếu đường dẫn hợp lệ, chương trình sẽ hiện:
+3. Khởi động project "clamav-agent" (ở máy host server) và "socket-client" (ở máy chạy FTP client).
+4. Sau khi khởi động "clamav-agent" (ở máy host server), nhập đường dẫn đến thư mục chứa ClamAV (đường dẫn có thể khác sau tùy thiết lập cài đặt). Nếu đường dẫn hợp lệ, chương trình sẽ hiện:
 	`===ClamAV Agent===`
 	`Waiting for file...`
-5. Ở chương trình "socket-client", lúc này có thể tiến hành nhập các câu lệnh để kết nối server (có thể gõ "help" hoặc "?" để hiện hướng dẫn các câu lệnh)
+5. Ở chương trình "socket-client" (ở máy chạy FTP client), lúc này có thể tiến hành nhập các câu lệnh để kết nối server (có thể gõ "help" hoặc "?" để hiện hướng dẫn các câu lệnh)
+
+- Bước 2 và 3 có thể thay thế bằng: vào thư mục "socket-client", sau đó vào thư mục "x64", vào thư mục "Debug", chạy "clamav-agent.exe" (ở máy host server) và chạy "clamav-client.exe" (ở máy chạy FTP client).
 # Câu lệnh mẫu và kết quả
 - Nếu chế độ passive đang tắt (off) thì sẽ hiện dòng `200 PORT command successful.` (nếu có). Ngược lại, nếu chế độ passive đang bật (on) thì sẽ hiện dòng `227 Entering Passive Mode (192,168,157,1,78,130)` thay cho `200 PORT command successful.` (nếu có).
 - Nếu nhập câu lệnh không hợp lệ sẽ hiện `Invalid command.`.
