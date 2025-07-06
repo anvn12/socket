@@ -777,12 +777,30 @@ bool SocketClient::processCommand()
 
 	else if (command[0] == "ascii")
 	{
+		if (!isConnected) {
+			std::cout << "Not connected.\n"; return true;
+		}
+
+		if (command.size() != 1)
+		{
+			return false;
+		}
+
 		type = 'A';
 		sendCommandMessage("TYPE A\r\n");
 		cout << getResponseMessage();
 	}
 	else if (command[0] == "binary")
 	{
+		if (!isConnected) {
+			std::cout << "Not connected.\n"; return true;
+		}
+
+		if (command.size() != 1)
+		{
+			return false;
+		}
+
 		type = 'I';
 		sendCommandMessage("TYPE I\r\n");
 		cout << getResponseMessage();
